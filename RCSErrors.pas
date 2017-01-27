@@ -102,30 +102,27 @@ const
  RCS_MODULE_SC_OUT_SUM_ERROR_GIVING_UP = 3179;
 
 type
-  // TODO: more hierarchy to exceptions
+  RCSException = class(Exception);
 
-  ERCSAlreadyOpened = class(Exception);
-  ERCSCannotOpenPort = class(Exception);
-  ERCSFirmwareTooLow = class(Exception);
+  ERCSGeneralException = class(RCSException);
 
-  ERCSAlreadyStarted = class(Exception);
-  ERCSOpeningNotFinished = class(Exception);
-  ERCSNoModules = class(Exception);
-  ERCSNotStarted = class(Exception);
+  ERCSAlreadyOpened = class(RCSException);
+  ERCSCannotOpenPort = class(RCSException);
+  ERCSFirmwareTooLow = class(RCSException);
+  ERCSAlreadyStarted = class(RCSException);
+  ERCSNoModules = class(RCSException);
+  ERCSNotStarted = class(RCSException);
+  ERCSInvalidModuleAddr = class(RCSException);
+  ERCSInvalidModulePort = class(RCSException);
+  ERCSInvalidScomCode = class(RCSException);
+  ERCSNotOpened = class(RCSException);
+  ERCSModuleFailed = class(RCSException);
+  ERCSModuleNotAvailable = class(RCSException);
+  ERCSScanningNotFinished = class(RCSException);
 
-
-  ERCSGeneralException = class(Exception);
-
-  ERCSInvalidModuleAddr = class(Exception);
-  ERCSInvalidModulePort = class(Exception);
-  ERCSInvalidScomCode = class(Exception);
-
-  ERCSNotOpened = class(Exception);
-
-  ERCSModuleFailed = class(Exception);
-  ERCSModuleNotAvailable = class(Exception);
-  ERCSScanningNotFinished = class(Exception);
-
+  ERCSFuncNotAssigned = class(RCSException);
+  ERCSLibNotFound = class(RCSException);
+  ERCSCannotLoadLib = class(RCSException);
 
 implementation
 

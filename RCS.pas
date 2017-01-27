@@ -25,14 +25,14 @@
 }
 
 {
- TRCSIFace class allows its parent to load dll library with railroad control
- system and simply use its functions.
+  TRCSIFace class allows its parent to load dll library with railroad control
+  system and simply use its functions.
 }
 
 {
- WARNING:
-  It is required to check whether functions in this class are really mapped to
-  dll functions (the do not have to exist)
+  WARNING:
+   It is required to check whether functions in this class are really mapped to
+   dll functions (the do not have to exist)
 }
 
 unit RCS;
@@ -86,13 +86,6 @@ type
   TDllStdLogBind = procedure(event:TStdLogEvent; data:Pointer); stdcall;
   TDllStdErrorBind = procedure(event:TStdErrorEvent; data:Pointer); stdcall;
   TDllStdModuleChangeBind = procedure(event:TStdModuleChangeEvent; data:Pointer); stdcall;
-
-  ///////////////////////////////////////////////////////////////////////////
-
-  // Custom exceptions: (TODO)
-  ERCSFuncNotAssigned = class(Exception);
-  ERCSLibNotFound = class(Exception);
-  ERCSCannotLoadLib = class(Exception);
 
   ///////////////////////////////////////////////////////////////////////////
 
