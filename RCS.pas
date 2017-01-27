@@ -7,6 +7,24 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 {
+   LICENSE:
+
+   Copyright 2017 Jan Horacek, Michal Petrilak
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+  limitations under the License.
+}
+
+{
  TRCSIFace class allows its parent to load dll library with railroad control
  system and simply use its functions.
 }
@@ -36,9 +54,9 @@ type
   ///////////////////////////////////////////////////////////////////////////
   // Events called from TRCSIFace to parent:
 
-  TOnLogEvent = procedure (Sender: TObject; logLevel:Integer; msg:PChar) of object;
-  TOnErrorEvent = procedure (Sender: TObject; errValue: word; errAddr: byte; errMsg:PChar) of object;
-  TOnModuleChangeEvent = procedure (Sender: TObject; module: byte) of object;
+  TLogEvent = procedure (Sender: TObject; logLevel:Integer; msg:PChar) of object;
+  TErrorEvent = procedure (Sender: TObject; errValue: word; errAddr: byte; errMsg:PChar) of object;
+  TModuleChangeEvent = procedure (Sender: TObject; module: byte) of object;
 
   ///////////////////////////////////////////////////////////////////////////
   // Prototypes of functions called to library:
@@ -72,7 +90,18 @@ type
   ///////////////////////////////////////////////////////////////////////////
 
   // Custom exceptions: (TODO)
-  EFuncNotAssigned = class(Exception);
+  ERCSFuncNotAssigned = class(Exception);
+  ERCSLibNotFound = class(Exception);
+  ERCSCannotLoadLib = class(Exception);
+
+  ///////////////////////////////////////////////////////////////////////////
+
+  TRCSInputState = (
+    low = 0,
+    high = 1,
+    failure = RCS_MODULE_FAILED,
+    notYetScanned = RCS_INPUT_NOT_YET_SCANNED
+  );
 
   ///////////////////////////////////////////////////////////////////////////
 
@@ -129,24 +158,6 @@ type
     dllFuncGetDeviceVersion : TDllDeviceVersionGetter;
     dllFuncGetVersion : TDllVersionGetter;
 
-    // events open/close
-    dllFuncBindBeforeOpen: TDllStdNotifyBind;
-    dllFuncBindAfterOpen: TDllStdNotifyBind;
-    dllFuncBindBeforeClose: TDllStdNotifyBind;
-    dllFuncBindAfterClose: TDllStdNotifyBind;
-
-    // events start/stop
-    dllFuncBindBeforeStart: TDllStdNotifyBind;
-    dllFuncBindAfterStart: TDllStdNotifyBind;
-    dllFuncBindBeforeStop: TDllStdNotifyBind;
-    dllFuncBindAfterStop: TDllStdNotifyBind;
-
-    // other events
-    dllFuncBindOnError : TDllStdErrorBind;
-    dllFuncBindOnLog : TDllStdLogBind;
-    dllFuncBindOnInputChanged : TStdModuleChangeEvent;
-    dllFuncBindOnOutputChanged : TStdModuleChangeEvent;
-
     // ------------------------------------------------------------------
     // Events from TRCSIFace
 
@@ -160,10 +171,10 @@ type
     eBeforeStop : TNotifyEvent;
     eAfterStop : TNotifyEvent;
 
-    eOnError: TOnErrorEvent;
-    eOnLog : TOnLogEvent;
-    eOnInputChange : TOnModuleChangeEvent;
-    eOnOutputChange : TOnModuleChangeEvent;
+    eOnError: TErrorEvent;
+    eOnLog : TLogEvent;
+    eOnInputChange : TModuleChangeEvent;
+    eOnOutputChange : TModuleChangeEvent;
 
      procedure SetLibName(s: string);
 
@@ -175,28 +186,22 @@ type
      procedure Start();                                                          // spustit komunikaci
      procedure Stop();                                                           // zastavit komunikaci
 
-     procedure SetOutput(Board, Output: Integer; state: Integer);                // nastavit vystupni port
-     function GetInput(Board, Input: Integer): Integer;                          // vratit hodnotu na vstupnim portu
-     procedure SetInput(Board, Input: Integer; State : integer);                 // nastavit vstupni port (pro debug ucely)
-     function GetOutput(Board, Port:Integer):Integer;                            // ziskani stavu vystupu
+     procedure SetOutput(module, Output: Integer; state: Integer);                // nastavit vystupni port
+     function GetInput(module, Input: Integer): TRCSInputState;                   // vratit hodnotu na vstupnim portu
+     procedure SetInput(module, Input: Integer; State : boolean);                 // nastavit vstupni port (pro debug ucely)
+     function GetOutput(module, Port:Integer):Integer;                            // ziskani stavu vystupu
 
      procedure ShowConfigDialog();                                               // zobrazit konfiguracni dialog knihovny
      procedure HideConfigDialog();                                               // skryt konfiguracni dialog knihovny
-     procedure ShowAboutDialog();                                                // zobrazit about dialog knihvny
 
-     function GetLibVersion():string;                                            // vrati verzi knihovny
+     function GetDllVersion():string;                                         // vrati verzi MTBdrv drivery v knihovne
      function GetDeviceVersion():string;                                         // vrati verzi FW v MTB-USB desce
-     function GetDriverVersion():string;                                         // vrati verzi MTBdrv drivery v knihovne
 
-     function GetModuleName(Module:Integer):string;                              // vrati jmeno modulu
-     procedure SetModuleName(Module:Integer; aName:string);                      // nastavi jmeno modulu
+     function GetModuleName(module:Cardinal):string;                              // vrati jmeno modulu
 
-     function GetModuleExists(Module:Integer):boolean;                           // vrati jestli modul existuje
-     function GetModuleType(Module:Integer):string;                              // vrati typ modulu
-     function GetModuleFirmware(Module:integer):String;                          // vrati verzi FW v modulu
-
-     procedure SetBusSpeed(Speed:Integer);                                       // nastavi rychlost sbernice, mozno volat pouze pri zastavene komunikaci
-     procedure SetScanInterval(Interval:integer);                                // nastavi ScanInterval sbernice
+     function IsModule(Module:Cardinal):boolean;                           // vrati jestli modul existuje
+     function GetModuleType(Module:Cardinal):Integer;                              // vrati typ modulu
+     function GetModuleFW(Module:Cardinal):string;                          // vrati verzi FW v modulu
 
      procedure LoadLib();                                                        // nacte knihovnu
 
@@ -211,13 +216,10 @@ type
      property BeforeStop:TNotifyEvent read eBeforeStop write eBeforeStop;
      property AfterStop:TNotifyEvent read eAfterStop write eAfterStop;
 
-     property OnError:TOnErrorEvent read eOnError write eOnError;
-     property OnError:TOnErrorEvent read eOnError write eOnError;
-     property OnInputChanged:TOnModuleChangeEvent read eOnInputChange write eOnInputChange;
-     property OnOutputChanged:TOnModuleChangeEvent read eOnOutputChange write eOnOutputChange;
-
-     constructor Create(AOwner: TComponent); override;
-     destructor Destroy; override;
+     property OnError:TErrorEvent read eOnError write eOnError;
+     property OnLog:TLogEvent read eOnLog write eOnLog;
+     property OnInputChanged:TModuleChangeEvent read eOnInputChange write eOnInputChange;
+     property OnOutputChanged:TModuleChangeEvent read eOnOutputChange write eOnOutputChange;
 
      property Lib: string read dllName write SetLibName;
 
@@ -228,317 +230,405 @@ implementation
 
 ////////////////////////////////////////////////////////////////////////////////
 
-constructor TRCSIFace.Create(AOwner: TComponent);
- begin
-  inherited;
- end;
-
-destructor TRCSIFace.Destroy;
- begin
-  if Assigned(FFuncOnUnload) then FFuncOnUnload();
-  inherited;
- end;
-
-////////////////////////////////////////////////////////////////////////////////
-
 procedure TRCSIFace.SetLibName(s: string);
  begin
   if FileExists(s) then
-    FLibname := s
+    dllName := s
   else
-    raise Exception.Create('Library '+s+' not found');
+    raise ERCSLibNotFound.Create('Library '+s+' not found!');
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
-// eventy z dll knihovny:
+// Events from dll library, these evetns must be declared as functions
+// (not as functions of objects)
 
-procedure OnLibBeforeOpen(Sender:TObject; data:Pointer); stdcall;
+procedure dllBeforeOpen(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnBeforeOpen)) then TRCSIFace(data).OnBeforeOpen(TRCSIFace(data));
+  if (Assigned(TRCSIFace(data).BeforeOpen)) then TRCSIFace(data).BeforeOpen(TRCSIFace(data));
  end;
 
-procedure OnLibAfterOpen(Sender:TObject; data:Pointer); stdcall;
+procedure dllAfterOpen(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnAfterOpen)) then TRCSIFace(data).OnAfterOpen(TRCSIFace(data));
+  if (Assigned(TRCSIFace(data).AfterOpen)) then TRCSIFace(data).AfterOpen(TRCSIFace(data));
  end;
 
-procedure OnLibBeforeClose(Sender:TObject; data:Pointer); stdcall;
+procedure dllBeforeClose(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnBeforeClose)) then TRCSIFace(data).OnBeforeClose(TRCSIFace(data));
+  if (Assigned(TRCSIFace(data).BeforeClose)) then TRCSIFace(data).BeforeClose(TRCSIFace(data));
  end;
 
-procedure OnLibAfterClose(Sender:TObject; data:Pointer); stdcall;
+procedure dllAfterClose(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnAfterClose)) then TRCSIFace(data).OnAfterClose(TRCSIFace(data));
+  if (Assigned(TRCSIFace(data).AfterClose)) then TRCSIFace(data).AfterClose(TRCSIFace(data));
  end;
 
-procedure OnLibBeforeStart(Sender:TObject; data:Pointer); stdcall;
+procedure dllBeforeStart(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnBeforeStart)) then TRCSIFace(data).OnBeforeStart(TRCSIFace(data));
+  if (Assigned(TRCSIFace(data).BeforeStart)) then TRCSIFace(data).BeforeStart(TRCSIFace(data));
  end;
 
-procedure OnLibAfterStart(Sender:TObject; data:Pointer); stdcall;
+procedure dllAfterStart(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnAfterStart)) then TRCSIFace(data).OnAfterStart(TRCSIFace(data));
+  if (Assigned(TRCSIFace(data).AfterStart)) then TRCSIFace(data).AfterStart(TRCSIFace(data));
  end;
 
-procedure OnLibBeforeStop(Sender:TObject; data:Pointer); stdcall;
+procedure dllBeforeStop(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnBeforeStop)) then TRCSIFace(data).OnBeforeStop(TRCSIFace(data));
+  if (Assigned(TRCSIFace(data).BeforeStop)) then TRCSIFace(data).BeforeStop(TRCSIFace(data));
  end;
 
-procedure OnLibAfterStop(Sender:TObject; data:Pointer); stdcall;
+procedure dllAfterStop(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnAfterStop)) then TRCSIFace(data).OnAfterStop(TRCSIFace(data));
+  if (Assigned(TRCSIFace(data).AfterStop)) then TRCSIFace(data).AfterStop(TRCSIFace(data));
  end;
 
-procedure OnLibError(Sender: TObject; data:Pointer; errValue: word; errAddr: byte; errMsg:string); stdcall;
+procedure dllOnError(Sender: TObject; data:Pointer; errValue: word; errAddr: byte; errMsg:PChar); stdcall;
  begin
   if (Assigned(TRCSIFace(data).OnError)) then TRCSIFace(data).OnError(TRCSIFace(data), errValue, errAddr, errMsg);
  end;
 
-procedure OnLibInputChanged(Sender: TObject; data:Pointer; board:byte); stdcall;
+procedure dllOnLog(Sender: TObject; data:Pointer; logLevel:Integer; msg:PChar); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnInputChanged)) then TRCSIFace(data).OnInputChanged(TRCSIFace(data), board);
+  if (Assigned(TRCSIFace(data).OnLog)) then TRCSIFace(data).OnLog(TRCSIFace(data), logLevel, msg);
  end;
 
-procedure OnLibOutputChanged(Sender: TObject; data:Pointer; board:byte); stdcall;
+procedure dllOnInputChanged(Sender: TObject; data:Pointer; module:byte); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnOutputChanged)) then TRCSIFace(data).OnOutputChanged(TRCSIFace(data), board);
+  if (Assigned(TRCSIFace(data).OnInputChanged)) then TRCSIFace(data).OnInputChanged(TRCSIFace(data), module);
+ end;
+
+procedure dllOnOutputChanged(Sender: TObject; data:Pointer; module:byte); stdcall;
+ begin
+  if (Assigned(TRCSIFace(data).OnOutputChanged)) then TRCSIFace(data).OnOutputChanged(TRCSIFace(data), module);
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
-// nacist dll knihovnu
+// Load dll library
 
 procedure TRCSIFace.LoadLib();
-var setterNotify: TSetDllNotifyEvent;
-    setterErr: TSetDllErrEvent;
-    setterModuleChanged: TSetDllEventChange;
+var dllFuncStdNotifyBind: TDllStdNotifyBind;
+    dllFuncOnErrorBind: TDllStdErrorBind;
+    dllFuncOnLogBind: TDllStdLogBind;
+    dllFuncOnChangedBind: TDllStdModuleChangeBind;
  begin
-  FLib := LoadLibrary(PChar(FLibname));
-  if (FLib = 0) then
-    raise Exception.Create('Library not loaded');
+  dllHandle := LoadLibrary(PChar(dllName));
+  if (dllHandle = 0) then
+    raise ERCSCannotLoadLib.Create('Library not loaded');
 
-  FFuncOnUnload           := TODProc(GetProcAddress(FLib, 'onunload'));
-  FFuncSetOutput          := TODSetOutput(GetProcAddress(FLib, 'setoutput'));
-  FFuncSetInput           := TODSetInput(GetProcAddress(FLib, 'setinput'));
-  FFuncGetInput           := TODGetInput(GetProcAddress(FLib, 'getinput'));
-  FFuncGetOutput          := TODGetOutput(GetProcAddress(FLib, 'getoutput'));
-  FFuncShowConfigDialog   := TODProc(GetProcAddress(FLib, 'showconfigdialog'));
-  FFuncHideConfigDialog   := TODProc(GetProcAddress(FLib, 'hideconfigdialog'));
-  FFuncShowAboutDialog    := TODProc(GetProcAddress(FLib, 'showaboutdialog'));
-  FFuncStart              := TODProc(GetProcAddress(FLib, 'start'));
-  FFuncStop               := TODProc(GetProcAddress(FLib, 'stop'));
-  FFuncGetLibVersion      := TODFuncStr(GetProcAddress(FLib, 'getlibversion'));
-  FFuncGetDeviceVersion   := TODFuncStr(GetProcAddress(FLib, 'getdeviceversion'));
-  FFuncGetDriverVersion   := TODFuncStr(GetProcAddress(FLib, 'getdriverversion'));
-  FFuncGetModuleFirmware  := TODModuleStr(GetProcAddress(FLib, 'getmodulefirmware'));
-  FFuncModuleExists       := TODModuleExists(GetProcAddress(FLib, 'getmoduleexists'));
-  FFuncGetModuleType      := TODModuleStr(GetProcAddress(FLib, 'getmoduletype'));
-  FFuncGetModuleName      := TODModuleStr(GetProcAddress(FLib, 'getmodulename'));
-  FFuncSetModuleName      := TODSetModuleName(GetProcAddress(FLib, 'setmodulename'));
-  FFuncSetBusSpeed        := TODSetBusSpeed(GetProcAddress(FLib, 'setmtbspeed'));
-  FFuncSetScanInterval    := TODSetScanInterval(GetProcAddress(FLib, 'settimerinterval'));
-  FFuncOpen               := TODProc(GetProcAddress(FLib, 'open'));
-  FFuncClose              := TODProc(GetProcAddress(FLib, 'close'));
+  // config file load/save
+  dllFuncLoadConfig := TDllFileIO(GetProcAddress(dllHandle, 'LoadConfig'));
+  dllFuncSaveConfig := TDllFileIO(GetProcAddress(dllHandle, 'SaveConfig'));
 
-  // assign events:
-  setterNotify := TSetDllNotifyEvent(GetProcAddress(FLib, 'setbeforeopen'));
-  if (Assigned(setterNotify)) then setterNotify(@OnLibBeforeOpen, self);
-  setterNotify := TSetDllNotifyEvent(GetProcAddress(FLib, 'setafteropen'));
-  if (Assigned(setterNotify)) then setterNotify(@OnLibAfterOpen, self);
-  setterNotify := TSetDllNotifyEvent(GetProcAddress(FLib, 'setbeforeclose'));
-  if (Assigned(setterNotify)) then setterNotify(@OnLibBeforeClose, self);
-  setterNotify := TSetDllNotifyEvent(GetProcAddress(FLib, 'setafterclose'));
-  if (Assigned(setterNotify)) then setterNotify(@OnLibAfterClose, self);
+  // logging
+  dllFuncSetLogLevelFile := TDllSetLogLevel(GetProcAddress(dllHandle, 'SetLogLevelFile'));
+  dllFuncSetLogLevel     := TDllSetLogLevel(GetProcAddress(dllHandle, 'SetLogLevel'));
+  dllFuncGetLogLevel     := TDllGetLogLevel(GetProcAddress(dllHandle, 'GetLogLevel'));
 
-  setterNotify := TSetDllNotifyEvent(GetProcAddress(FLib, 'setbeforestart'));
-  if (Assigned(setterNotify)) then setterNotify(@OnLibBeforeStart, self);
-  setterNotify := TSetDllNotifyEvent(GetProcAddress(FLib, 'setafterstart'));
-  if (Assigned(setterNotify)) then setterNotify(@OnLibAfterStart, self);
-  setterNotify := TSetDllNotifyEvent(GetProcAddress(FLib, 'setbeforestop'));
-  if (Assigned(setterNotify)) then setterNotify(@OnLibBeforeStop, self);
-  setterNotify := TSetDllNotifyEvent(GetProcAddress(FLib, 'setafterstop'));
-  if (Assigned(setterNotify)) then setterNotify(@OnLibafterStop, self);
+  // dialogs
+  dllFuncShowConfigDialog := TDllPGeneral(GetProcAddress(dllHandle, 'ShowCOnfigDialog'));
+  dllFuncHideConfigDialog := TDllPGeneral(GetProcAddress(dllHandle, 'HideConfigDialog'));
 
-  setterErr := TSetDllErrEvent(GetProcAddress(FLib, 'setonerror'));
-  if (Assigned(setterErr)) then setterErr(@OnLibError, self);
+  // open/close
+  dllFuncOpen := TDllFGeneral(GetProcAddress(dllHandle, 'Open'));
+  dllFuncOpenDevice := TDllOpenDevice(GetProcAddress(dllHandle, 'OpenDevice'));
+  dllFuncClose := TDllFGeneral(GetProcAddress(dllHandle, 'Close'));
+  dllFuncOpened := TDllBoolGetter(GetProcAddress(dllHandle, 'Opened'));
 
-  setterModuleChanged := TSetDllEventChange(GetProcAddress(FLib, 'setoninputchange'));
-  if (Assigned(setterModuleChanged)) then setterModuleChanged(@OnLibInputChanged, self);
-  setterModuleChanged := TSetDllEventChange(GetProcAddress(FLib, 'setonoutputchange'));
-  if (Assigned(setterModuleChanged)) then setterModuleChanged(@OnLibOutputChanged, self);
+  // start/stop
+  dllFuncStart := TDllFGeneral(GetProcAddress(dllHandle, 'Start'));
+  dllFuncStop := TDllFGeneral(GetProcAddress(dllHandle, 'Stop'));
+  dllFuncStarted := TDllBoolGetter(GetProcAddress(dllHandle, 'Started'));
+
+  // ports IO
+  dllFuncGetInput := TDllModuleGet(GetProcAddress(dllHandle, 'GetInput'));
+  dllFuncGetOutput := TDllModuleGet(GetProcAddress(dllHandle, 'GetOutput'));
+  dllFuncSetOutput := TDllModuleSet(GetProcAddress(dllHandle, 'SetOutput'));
+
+  // devices
+  dllFuncGetDeviceCount := TDllFGeneral(GetProcAddress(dllHandle, 'GetDeviceCount'));
+  dllFuncGetDeviceSerial := TDllDeviceSerialGetter(GetProcAddress(dllHandle, 'GetDeviceSerial'));
+
+  // modules
+  dllFuncIsModule := TDllModuleBoolGetter(GetProcAddress(dllHandle, 'IsModule'));
+  dllFuncIsModuleFailure := TDllModuleBoolGetter(GetProcAddress(dllHandle, 'IsModuleFailure'));
+  dllFuncGetModuleCount := TDllFCardGeneral(GetProcAddress(dllHandle, 'GetModuleCount'));
+  dllFuncGetModuleType := TDllModuleIntGetter(GetProcAddress(dllHandle, 'GetModuleType'));
+  dllFuncGetModuleName := TDllModuleStringGetter(GetProcAddress(dllHandle, 'GetModuleName'));
+  dllFuncGetModuleFW := TDllModuleStringGetter(GetProcAddress(dllHandle, 'GetModuleFW'));
+
+  // versions
+  dllFuncGetDeviceVersion := TDllDeviceVersionGetter(GetProcAddress(dllHandle, 'GetDeviceVersion'));
+  dllFuncGetVersion := TDllVersionGetter(GetProcAddress(dllHandle, 'GetDriverVersion'));
+
+  // events open/close
+  dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindBeforeOpen'));
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllBeforeOpen, self);
+  dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindAfterOpen'));
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllAfterOpen, self);
+  dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindBeforeClose'));
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllBeforeClose, self);
+  dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindAfterClose'));
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllAfterClose, self);
+
+  // events start/stop
+  dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindBeforeStart'));
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllBeforeStart, self);
+  dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindAfterStart'));
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllAfterStart, self);
+  dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindBeforeStop'));
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllBeforeStop, self);
+  dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindAfterStop'));
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllAfterStop, self);
+
+  // other events
+  dllFuncOnErrorBind := TDllStdErrorBind(GetProcAddress(dllHandle, 'BindOnError'));
+  if (Assigned(dllFuncOnErrorBind)) then dllFuncOnErrorBind(@dllOnError, self);
+  dllFuncOnLogBind := TDllStdLogBind(GetProcAddress(dllHandle, 'BindOnLog'));
+  if (Assigned(dllFuncOnLogBind)) then dllFuncOnLogBind(@dllOnLog, self);
+  dllFuncOnChangedBind := TDllStdModuleChangeBind(GetProcAddress(dllHandle, 'BindOnInputChanged'));
+  if (Assigned(dllFuncOnChangedBind)) then dllFuncOnChangedBind(@dllOnInputChanged, self);
+  dllFuncOnChangedBind := TDllStdModuleChangeBind(GetProcAddress(dllHandle, 'BindOnOutputChanged'));
+  if (Assigned(dllFuncOnChangedBind)) then dllFuncOnChangedBind(@dllOnOutputChanged, self);
+
+  // TODO: check all the functions bound?
+
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
-// metody volane do knihovny:
-
-procedure TRCSIFace.ShowAboutDialog();
- begin
-  if (Assigned(FFuncShowAboutDialog)) then
-    FFuncShowAboutDialog()
-  else
-    raise EFuncNotAssigned.Create('FFuncShowAboutDialog not assigned');
- end;
+// Parent should call these methods:
 
 procedure TRCSIFace.ShowConfigDialog();
  begin
-  if (Assigned(FFuncShowConfigDialog)) then
-    FFuncShowConfigDialog()
+  if (Assigned(dllFuncShowConfigDialog)) then
+    dllFuncShowConfigDialog()
   else
-    raise EFuncNotAssigned.Create('FFuncShowConfigDialog not assigned');
+    raise ERCSFuncNotAssigned.Create('FFuncShowConfigDialog not assigned');
  end;
 
 procedure TRCSIFace.HideConfigDialog();
  begin
-  if (Assigned(FFuncHideConfigDialog)) then
-    FFuncHideConfigDialog()
+  if (Assigned(dllFuncHideConfigDialog)) then
+    dllFuncHideConfigDialog()
   else
-    raise EFuncNotAssigned.Create('FFuncHideConfigDialog not assigned');
+    raise ERCSFuncNotAssigned.Create('FFuncHideConfigDialog not assigned');
  end;
 
-function TRCSIFace.GetInput(Board, Input: Integer): Integer;
+function TRCSIFace.GetInput(module, Input: Integer):TRCSInputState;
+var tmp:Integer;
  begin
-  if (Assigned(FFuncGetInput)) then
-    Result := FFuncGetInput(Board, Input)
-  else
-    raise EFuncNotAssigned.Create('FFuncGetInput not assigned');
+  if (not Assigned(dllFuncGetInput)) then
+    raise ERCSFuncNotAssigned.Create('FFuncGetInput not assigned');
+
+  tmp := dllFuncGetInput(module, Input);
+
+  if (tmp = RCS_NOT_STARTED) then
+    raise ERCSNotStarted.Create('Railroad Control System not started!')
+  else if (tmp = RCS_MODULE_INVALID_ADDR) then
+    raise ERCSInvalidModuleAddr.Create('Invalid module adderess: '+IntToStr(module)+'!')
+  else if (tmp = RCS_PORT_INVALID_NUMBER) then
+    raise ERCSInvalidModulePort.Create('Invalid port number!')
+  else if (tmp = RCS_GENERAL_EXCEPTION) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
+
+  Result := TRCSInputState(tmp);
  end;
 
-procedure TRCSIFace.SetOutput(Board, Output: Integer; state: Integer);
+procedure TRCSIFace.SetOutput(module, Output: Integer; state: Integer);
+var res:Integer;
  begin
-  if (Assigned(FFuncSetOutput)) then
-    FFuncSetOutput(Board, Output, state)
-  else
-    raise EFuncNotAssigned.Create('FFuncSetOutput not assigned');
+  if (not Assigned(dllFuncSetOutput)) then
+    raise ERCSFuncNotAssigned.Create('FFuncSetOutput not assigned');
+
+  res := dllFuncSetOutput(module, Output, state);
+
+  if (res = RCS_NOT_STARTED) then
+    raise ERCSNotStarted.Create('Railroad Control System not started!')
+  else if (res = RCS_MODULE_INVALID_ADDR) then
+    raise ERCSModuleNotAvailable.Create('Module '+IntToStr(module)+' not available on bus!')
+  else if (res = RCS_MODULE_FAILED) then
+    raise ERCSModuleFailed.Create('Module '+IntToStr(module)+' failed!')
+  else if (res = RCS_PORT_INVALID_NUMBER) then
+    raise ERCSInvalidModulePort.Create('Invalid port number!')
+  else if (res = RCS_INVALID_SCOM_CODE) then
+    raise ERCSInvalidScomCode.Create('Invalid scom code : '+IntToStr(state)+'!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-procedure TRCSIFace.SetInput(Board, Input: Integer; state: Integer);
+// TODO
+procedure TRCSIFace.SetInput(module, Input: Integer; state: boolean);
  begin
-  if (Assigned(FFuncSetInput)) then
-    FFuncSetInput(Board, Input, state)
+{  if (Assigned(dllFuncSetInput)) then
+    FFuncSetInput(module, Input, state)
   else
-    raise EFuncNotAssigned.Create('FFuncSetInput not assigned');
+    raise EFuncNotAssigned.Create('FFuncSetInput not assigned');}
  end;
 
-function TRCSIFace.GetOutput(Board, Port:Integer):Integer;
-begin
-  if (Assigned(FFuncGetOutput)) then
-    Result := FFuncGetOutput(Board, Port)
-  else
-    raise EFuncNotAssigned.Create('FFuncGetOutput not assigned');
-end;
-
-function TRCSIFace.GetLibVersion():String;
+function TRCSIFace.GetOutput(module, Port:Integer):Integer;
  begin
-  if (Assigned(FFuncGetLibVersion)) then
-    Result := FFuncGetLibVersion()
-  else
-    raise EFuncNotAssigned.Create('FFuncGetLibVersion not assigned');
+  if (not Assigned(dllFuncGetOutput)) then
+    raise ERCSFuncNotAssigned.Create('FFuncGetOutput not assigned');
+
+  Result := dllFuncGetOutput(module, Port);
+
+  if (Result = RCS_NOT_STARTED) then
+    raise ERCSNotStarted.Create('Railroad Control System not started!')
+  else if (Result = RCS_PORT_INVALID_NUMBER) then
+    raise ERCSModuleNotAvailable.Create('Module '+IntToStr(module)+' not available on bus!')
+  else if (Result = RCS_MODULE_FAILED) then
+    raise ERCSModuleFailed.Create('Module '+IntToStr(module)+' failed!')
+  else if (Result = RCS_PORT_INVALID_NUMBER) then
+    raise ERCSInvalidModulePort.Create('Invalid port number!')
+  else if (Result = RCS_GENERAL_EXCEPTION) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-function TRCSIFace.GetDriverVersion():String;
+function TRCSIFace.GetDeviceVersion():string;
+const STR_LEN = 32;
+var str:string[STR_LEN];
+    res:Integer;
  begin
-  if (Assigned(FFuncGetDriverVersion)) then
-    Result := FFuncGetDriverVersion()
-  else
-    raise EFuncNotAssigned.Create('FFuncGetDriverVersion not assigned');
+  if (not Assigned(dllFuncGetDeviceVersion)) then
+    raise ERCSFuncNotAssigned.Create('FFuncGetLibVersion not assigned');
+
+  res := dllFuncGetDeviceVersion(@str, STR_LEN);
+
+  if (res = RCS_DEVICE_DISCONNECTED) then
+    raise ERCSNotOpened.Create('Device not opened, cannot read version!');
+
+  Result := string(str);
  end;
 
-function TRCSIFace.GetDeviceVersion():String;
+function TRCSIFace.GetDllVersion():String;
+const STR_LEN = 32;
+var str:string[STR_LEN];
  begin
-  if (Assigned(FFuncGetDeviceVersion)) then
-    Result := FFuncGetDeviceVersion()
-  else
-    raise EFuncNotAssigned.Create('FFuncGetDeviceVersion not assigned');
+  if (not Assigned(dllFuncGetVersion)) then
+    raise ERCSFuncNotAssigned.Create('FFuncGetDriverVersion not assigned');
+
+  dllFuncGetVersion(@str, STR_LEN);
+  Result := string(str);
  end;
 
-function TRCSIFace.GetModuleExists(Module:Integer):boolean;
+function TRCSIFace.IsModule(Module:Cardinal):boolean;
  begin
-  if (Assigned(FFuncModuleExists)) then
-    Result := FFuncModuleExists(Module)
+  if (Assigned(dllFuncIsModule)) then
+    Result := dllFuncIsModule(Module)
   else
-    raise EFuncNotAssigned.Create('FFuncModuleExists not assigned');
+    raise ERCSFuncNotAssigned.Create('FFuncModuleExists not assigned');
  end;
 
-function TRCSIFace.GetModuleType(Module:Integer):string;
+function TRCSIFace.GetModuleType(Module:Cardinal):Integer;
  begin
-  if (Assigned(FFuncGetModuleType)) then
-    Result := FFuncGetModuleType(Module)
-  else
-    raise EFuncNotAssigned.Create('FFuncGetModuleType not assigned');
+  if (not Assigned(dllFuncGetModuleType)) then
+    raise ERCSFuncNotAssigned.Create('FFuncGetModuleType not assigned');
+
+  Result := dllFuncGetModuleType(Module);
+
+  if (Result = RCS_MODULE_INVALID_ADDR) then
+    raise ERCSInvalidModuleAddr.Create('Invalid module address : '+IntToStr(Module)+'!');
  end;
 
-function TRCSIFace.GetModuleName(Module:Integer):string;
+function TRCSIFace.GetModuleName(Module:Cardinal):string;
+const STR_LEN = 128;
+var str:string[STR_LEN];
+    res:Integer;
  begin
-  if (Assigned(FFuncGetModuleName)) then
-    Result := FFuncGetModuleName(Module)
-  else
-    raise EFuncNotAssigned.Create('FFuncGetModuleName not assigned');
- end;
+  if (not Assigned(dllFuncGetModuleName)) then
+    raise ERCSFuncNotAssigned.Create('FFuncGetModuleName not assigned');
 
-procedure TRCSIFace.SetModuleName(Module:Integer; aName:string);
- begin
-  if (Assigned(FFuncSetModuleName)) then
-    FFuncSetModuleName(Module, aName)
-  else
-    raise EFuncNotAssigned.Create('FFuncSetModuleName not assigned');
- end;
+  res := dllFuncGetModuleName(Module, @str, STR_LEN);
 
-procedure TRCSIFace.SetBusSpeed(Speed:Integer);
- begin
-  if (Assigned(FFuncSetBusSpeed)) then
-    FFuncSetBusSpeed(Speed)
-  else
-    raise EFuncNotAssigned.Create('FFuncSetBusSpeed not assigned');
+  if (res = RCS_MODULE_INVALID_ADDR) then
+    raise ERCSInvalidModuleAddr.Create('Invalid module address : '+IntToStr(Module)+'!');
+
+  Result := string(str);
  end;
 
 procedure TRCSIFace.Open();
+var res:Integer;
  begin
-  if (Assigned(FFuncOpen)) then
-    FFuncOpen()
-  else
-    raise EFuncNotAssigned.Create('FFuncOpen not assigned');
+  if (not Assigned(dllFuncOpen)) then
+    raise ERCSFuncNotAssigned.Create('FFuncOpen not assigned');
+
+  res := dllFuncOpen();
+
+  if (res = RCS_ALREADY_OPENNED) then
+    raise ERCSAlreadyOpened.Create('Device already opened!')
+  else if (res = RCS_CANNOT_OPEN_PORT) then
+    raise ERCSCannotOpenPort.Create('Cannot open this port!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
+// TODO: OpenDevice
+
 procedure TRCSIFace.Close();
+var res:Integer;
  begin
-  if (Assigned(FFuncClose)) then
-    FFuncClose()
-  else
-    raise EFuncNotAssigned.Create('FFuncClose not assigned');
+  if (not Assigned(dllFuncClose)) then
+    raise ERCSFuncNotAssigned.Create('FFuncClose not assigned');
+
+  res := dllFuncClose();
+
+  if (res = RCS_NOT_OPENED) then
+    raise ERCSNotOpened.Create('Device not opened!')
+  else if (res = RCS_SCANNING_NOT_FINISHED) then
+    raise ERCSScanningNotFinished.Create('Initial scanning of modules not finished, cannot close!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
 procedure TRCSIFace.Start();
+var res:Integer;
 begin
-  if (Assigned(FFuncStart)) then
-    FFuncStart()
-  else
-    raise EFuncNotAssigned.Create('FFuncStart not assigned');
+  if (not Assigned(dllFuncStart)) then
+    raise ERCSFuncNotAssigned.Create('FFuncStart not assigned');
+
+  res := dllFuncStart();
+
+  if (res = RCS_ALREADY_STARTED) then
+    raise ERCSAlreadyStarted.Create('Communication already started!')
+  else if (res = RCS_FIRMWARE_TOO_LOW) then
+    raise ERCSFirmwareTooLow.Create('RCS-PC module firware too low!')
+  else if (res = RCS_NO_MODULES) then
+    raise ERCSNoModules.Create('No modules found, cannot start!')
+  else if (res = RCS_NOT_OPENED) then
+    raise ERCSNotOpened.Create('Device not opened, cannot start!')
+  else if (res = RCS_SCANNING_NOT_FINISHED) then
+    raise ERCSScanningNotFinished.Create('Initial scanning of modules not finished, cannot start!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
 end;
 
 procedure TRCSIFace.Stop();
+var res:Integer;
 begin
-  if (Assigned(FFuncStop)) then
-    FFuncStop()
-  else
-    raise EFuncNotAssigned.Create('FFuncStop not assigned');
+  if (not Assigned(dllFuncStop)) then
+    raise ERCSFuncNotAssigned.Create('FFuncStop not assigned');
+
+  res := dllFuncStop();
+
+  if (res = RCS_NOT_STARTED) then
+    raise ERCSNotStarted.Create('Device not started, cannot stop!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
 end;
 
-function TRCSIFace.GetModuleFirmware(Module:integer):string;
+function TRCSIFace.GetModuleFW(Module:Cardinal):string;
+const STR_LEN = 16;
+var str:string[STR_LEN];
+    res:Integer;
  begin
-  if (Assigned(FFuncGetModuleFirmware)) then
-    Result := FFuncGetModuleFirmware(Module)
-  else
-    raise EFuncNotAssigned.Create('FFuncGetModuleFirmware not assigned');
- end;
+  if (not Assigned(dllFuncGetModuleFW)) then
+    raise ERCSFuncNotAssigned.Create('FFuncGetModuleFirmware not assigned');
 
-procedure TRCSIFace.SetScanInterval(Interval:integer);
- begin
-  if (Assigned(FFuncSetScanInterval)) then
-    FFuncSetScanInterval(Interval)
-  else
-    raise EFuncNotAssigned.Create('FFuncSetScanInterval not assigned');
+  res := dllFuncGetModuleFW(Module, @str, STR_LEN);
+
+  if (res = RCS_MODULE_INVALID_ADDR) then
+    raise ERCSInvalidModuleAddr.Create('Invalid module adderess: '+IntToStr(Module)+'!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
 ////////////////////////////////////////////////////////////////////////////////

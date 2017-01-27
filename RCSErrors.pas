@@ -102,15 +102,29 @@ const
  RCS_MODULE_SC_OUT_SUM_ERROR_GIVING_UP = 3179;
 
 type
-  EAlreadyOpened = class(Exception);
-  ECannotOpenPort = class(Exception);
-  EFirmwareTooLog = class(Exception);
-  ENotOpened = class(Exception);
-  EAlreadyStarted = class(Exception);
-  EOpeningNotFinished = class(Exception);
-  ENoModules = class(Exception);
-  ENotStarted = class(Exception);
-  EInvalidScomCode = class(Exception);
+  // TODO: more hierarchy to exceptions
+
+  ERCSAlreadyOpened = class(Exception);
+  ERCSCannotOpenPort = class(Exception);
+  ERCSFirmwareTooLow = class(Exception);
+
+  ERCSAlreadyStarted = class(Exception);
+  ERCSOpeningNotFinished = class(Exception);
+  ERCSNoModules = class(Exception);
+  ERCSNotStarted = class(Exception);
+
+
+  ERCSGeneralException = class(Exception);
+
+  ERCSInvalidModuleAddr = class(Exception);
+  ERCSInvalidModulePort = class(Exception);
+  ERCSInvalidScomCode = class(Exception);
+
+  ERCSNotOpened = class(Exception);
+
+  ERCSModuleFailed = class(Exception);
+  ERCSModuleNotAvailable = class(Exception);
+  ERCSScanningNotFinished = class(Exception);
 
 
 implementation
