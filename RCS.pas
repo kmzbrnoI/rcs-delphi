@@ -68,7 +68,7 @@ type
   TDllFileIO = function(filename:PChar):Integer; stdcall;
 
   TDllSetLogLevel = procedure(loglevel:Cardinal); stdcall;
-  TDllGetLogLevel = function(loglevel:Cardinal):Cardinal; stdcall;
+  TDllGetLogLevel = function():Cardinal; stdcall;
 
   TDllOpenDevice = function(device:PChar; persist:boolean):Integer; stdcall;
   TDllBoolGetter = function():boolean; stdcall;
@@ -94,6 +94,17 @@ type
     isOn = 1,
     failure = RCS_MODULE_FAILED,
     notYetScanned = RCS_INPUT_NOT_YET_SCANNED
+  );
+
+  ///////////////////////////////////////////////////////////////////////////
+
+  TRCSLogLevel = (
+    llNo = 0,
+    llErrors = 1,
+    llChangeOfState = 2,
+    llCommands = 3,
+    llRawCommands = 4,
+    llDebug = 5
   );
 
   ///////////////////////////////////////////////////////////////////////////
@@ -180,13 +191,21 @@ type
      constructor Create();
      destructor Destroy(); override;
 
+     // file I/O
      procedure LoadConfig(fn:string);
      procedure SaveConfig(fn:string);
 
+     // logging
+     procedure SetLogLevelFile(loglevel:TRCSLogLevel);
+     procedure SetLogLevel(loglevel:TRCSLogLevel);
+     function GetLogLevel():TRCSLogLevel;
+
+     // device open/close
      procedure Open();                                                           // otevrit zarizeni
      procedure OpenDevice(device:string; persist:boolean);
      procedure Close();                                                          // uzavrit zarizeni
 
+     // communication start/stop
      procedure Start();                                                          // spustit komunikaci
      procedure Stop();                                                           // zastavit komunikaci
 
@@ -733,10 +752,11 @@ var str:string[STR_LEN];
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
+// file I/O
 
 procedure TRCSIFace.LoadConfig(fn:string);
 var res:Integer;
-begin
+ begin
   if (not Assigned(dllFuncLoadConfig)) then
     raise ERCSFuncNotAssigned.Create('FFuncLoadConfig not assigned');
 
@@ -748,11 +768,11 @@ begin
     raise ERCSDeviceOpened.Create('Cannot reload config, device opened!')
   else if (res <> 0) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
-end;
+ end;
 
 procedure TRCSIFace.SaveConfig(fn:string);
 var res:Integer;
-begin
+ begin
   if (not Assigned(dllFuncSaveConfig)) then
     raise ERCSFuncNotAssigned.Create('FFuncSaveConfig not assigned');
 
@@ -762,7 +782,34 @@ begin
     raise ERCSCannotAccessFile.Create('Cannot write to file '+fn+'!')
   else if (res <> 0) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
-end;
+ end;
+
+////////////////////////////////////////////////////////////////////////////////
+// logging
+
+procedure TRCSIFace.SetLogLevelFile(loglevel:TRCSLogLevel);
+ begin
+  if (not Assigned(dllFuncSetLogLevelFile)) then
+    raise ERCSFuncNotAssigned.Create('FFuncSetLogLevelFile not assigned')
+  else
+    dllFuncSetLogLevelFile(Cardinal(loglevel));
+ end;
+
+procedure TRCSIFace.SetLogLevel(loglevel:TRCSLogLevel);
+ begin
+  if (not Assigned(dllFuncSetLogLevel)) then
+    raise ERCSFuncNotAssigned.Create('FFuncSetLogLevel not assigned')
+  else
+    dllFuncSetLogLevel(Cardinal(loglevel));
+ end;
+
+function TRCSIFace.GetLogLevel():TRCSLogLevel;
+ begin
+  if (not Assigned(dllFuncGetLogLevel)) then
+    raise ERCSFuncNotAssigned.Create('FFuncGetLogLevel not assigned')
+  else
+    Result := TRCSLogLevel(dllFuncGetLogLevel());
+ end;
 
 ////////////////////////////////////////////////////////////////////////////////
 
