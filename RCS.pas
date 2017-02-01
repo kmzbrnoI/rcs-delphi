@@ -122,7 +122,6 @@ type
     dllFuncSaveConfig: TDllFileIO;
 
     // logging
-    dllFuncSetLogLevelFile: TDllSetLogLevel;
     dllFuncSetLogLevel: TDllSetLogLevel;
     dllFuncGetLogLevel: TDllGetLogLevel;
 
@@ -202,7 +201,6 @@ type
      procedure SaveConfig(fn:string);
 
      // logging
-     procedure SetLogLevelFile(loglevel:TRCSLogLevel);
      procedure SetLogLevel(loglevel:TRCSLogLevel);
      function GetLogLevel():TRCSLogLevel;
 
@@ -291,7 +289,6 @@ procedure TRCSIFace.Reset();
   dllFuncSaveConfig := nil;
 
   // logging
-  dllFuncSetLogLevelFile := nil;
   dllFuncSetLogLevel := nil;
   dllFuncGetLogLevel := nil;
 
@@ -446,8 +443,6 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   if (not Assigned(dllFuncSaveConfig)) then unbound.Add('SaveConfig');
 
   // logging
-  dllFuncSetLogLevelFile := TDllSetLogLevel(GetProcAddress(dllHandle, 'SetLogLevelFile'));
-  if (not Assigned(dllFuncSetLogLevelFile)) then unbound.Add('SetLogLevelFile');
   dllFuncSetLogLevel     := TDllSetLogLevel(GetProcAddress(dllHandle, 'SetLogLevel'));
   if (not Assigned(dllFuncSetLogLevel)) then unbound.Add('SetLogLevel');
   dllFuncGetLogLevel     := TDllGetLogLevel(GetProcAddress(dllHandle, 'GetLogLevel'));
@@ -617,14 +612,6 @@ var res:Integer;
 
 ////////////////////////////////////////////////////////////////////////////////
 // logging
-
-procedure TRCSIFace.SetLogLevelFile(loglevel:TRCSLogLevel);
- begin
-  if (not Assigned(dllFuncSetLogLevelFile)) then
-    raise ERCSFuncNotAssigned.Create('FFuncSetLogLevelFile not assigned')
-  else
-    dllFuncSetLogLevelFile(Cardinal(loglevel));
- end;
 
 procedure TRCSIFace.SetLogLevel(loglevel:TRCSLogLevel);
  begin
