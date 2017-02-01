@@ -180,6 +180,9 @@ type
      constructor Create();
      destructor Destroy(); override;
 
+     procedure LoadConfig(fn:string);
+     procedure SaveConfig(fn:string);
+
      procedure Open();                                                           // otevrit zarizeni
      procedure OpenDevice(device:string; persist:boolean);
      procedure Close();                                                          // uzavrit zarizeni
@@ -728,6 +731,38 @@ var str:string[STR_LEN];
   else if (res <> 0) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
+
+////////////////////////////////////////////////////////////////////////////////
+
+procedure TRCSIFace.LoadConfig(fn:string);
+var res:Integer;
+begin
+  if (not Assigned(dllFuncLoadConfig)) then
+    raise ERCSFuncNotAssigned.Create('FFuncLoadConfig not assigned');
+
+  res := dllFuncLoadConfig(PChar(fn));
+
+  if (res = RCS_FILE_CANNOT_ACCESS) then
+    raise ERCSCannotAccessFile.Create('Cannot read file '+fn+'!')
+  else if (res = RCS_FILE_DEVICE_OPENED) then
+    raise ERCSDeviceOpened.Create('Cannot reload config, device opened!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
+end;
+
+procedure TRCSIFace.SaveConfig(fn:string);
+var res:Integer;
+begin
+  if (not Assigned(dllFuncSaveConfig)) then
+    raise ERCSFuncNotAssigned.Create('FFuncSaveConfig not assigned');
+
+  res := dllFuncSaveConfig(PChar(fn));
+
+  if (res = RCS_FILE_CANNOT_ACCESS) then
+    raise ERCSCannotAccessFile.Create('Cannot write to file '+fn+'!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
+end;
 
 ////////////////////////////////////////////////////////////////////////////////
 

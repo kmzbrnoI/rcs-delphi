@@ -119,6 +119,8 @@ type
   ERCSModuleFailed = class(RCSException);
   ERCSModuleNotAvailable = class(RCSException);
   ERCSScanningNotFinished = class(RCSException);
+  ERCSCannotAccessFile = class(RCSException);
+  ERCSDeviceOpened = class(RCSException);
 
   ERCSFuncNotAssigned = class(RCSException);
   ERCSLibNotFound = class(RCSException);
