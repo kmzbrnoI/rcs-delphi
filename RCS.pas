@@ -134,6 +134,7 @@ type
     dllFuncGetInput : TDllModuleGet;
     dllFuncGetOutput : TDllModuleGet;
     dllFuncSetOutput : TDllModuleSet;
+    dllFuncSetInput : TDllModuleSet;
 
     // devices
     dllFuncGetDeviceCount : TDllFGeneral;
@@ -180,10 +181,10 @@ type
      procedure Start();                                                          // spustit komunikaci
      procedure Stop();                                                           // zastavit komunikaci
 
-     procedure SetOutput(module, Output: Integer; state: Integer);                // nastavit vystupni port
-     function GetInput(module, Input: Integer): TRCSInputState;                   // vratit hodnotu na vstupnim portu
-     procedure SetInput(module, Input: Integer; State : boolean);                 // nastavit vstupni port (pro debug ucely)
-     function GetOutput(module, Port:Integer):Integer;                            // ziskani stavu vystupu
+     procedure SetOutput(module, port: Integer; state: Integer);                // nastavit vystupni port
+     function GetInput(module, port: Integer): TRCSInputState;                   // vratit hodnotu na vstupnim portu
+     procedure SetInput(module, port: Integer; State : Integer);                 // nastavit vstupni port (pro debug ucely)
+     function GetOutput(module, port:Integer):Integer;                            // ziskani stavu vystupu
 
      procedure ShowConfigDialog();                                               // zobrazit konfiguracni dialog knihovny
      procedure HideConfigDialog();                                               // skryt konfiguracni dialog knihovny
@@ -344,6 +345,7 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   dllFuncGetInput := TDllModuleGet(GetProcAddress(dllHandle, 'GetInput'));
   dllFuncGetOutput := TDllModuleGet(GetProcAddress(dllHandle, 'GetOutput'));
   dllFuncSetOutput := TDllModuleSet(GetProcAddress(dllHandle, 'SetOutput'));
+  dllFuncSetInput := TDllModuleSet(GetProcAddress(dllHandle, 'SetInput'));
 
   // devices
   dllFuncGetDeviceCount := TDllFGeneral(GetProcAddress(dllHandle, 'GetDeviceCount'));
@@ -416,13 +418,13 @@ procedure TRCSIFace.HideConfigDialog();
     raise ERCSFuncNotAssigned.Create('FFuncHideConfigDialog not assigned');
  end;
 
-function TRCSIFace.GetInput(module, Input: Integer):TRCSInputState;
+function TRCSIFace.GetInput(module, port: Integer):TRCSInputState;
 var tmp:Integer;
  begin
   if (not Assigned(dllFuncGetInput)) then
     raise ERCSFuncNotAssigned.Create('FFuncGetInput not assigned');
 
-  tmp := dllFuncGetInput(module, Input);
+  tmp := dllFuncGetInput(module, port);
 
   if (tmp = RCS_NOT_STARTED) then
     raise ERCSNotStarted.Create('Railroad Control System not started!')
@@ -436,13 +438,13 @@ var tmp:Integer;
   Result := TRCSInputState(tmp);
  end;
 
-procedure TRCSIFace.SetOutput(module, Output: Integer; state: Integer);
+procedure TRCSIFace.SetOutput(module, port: Integer; state: Integer);
 var res:Integer;
  begin
   if (not Assigned(dllFuncSetOutput)) then
     raise ERCSFuncNotAssigned.Create('FFuncSetOutput not assigned');
 
-  res := dllFuncSetOutput(module, Output, state);
+  res := dllFuncSetOutput(module, port, state);
 
   if (res = RCS_NOT_STARTED) then
     raise ERCSNotStarted.Create('Railroad Control System not started!')
@@ -458,21 +460,30 @@ var res:Integer;
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-// TODO
-procedure TRCSIFace.SetInput(module, Input: Integer; state: boolean);
+procedure TRCSIFace.SetInput(module, port: Integer; state: Integer);
+var res:Integer;
  begin
-{  if (Assigned(dllFuncSetInput)) then
-    FFuncSetInput(module, Input, state)
-  else
-    raise EFuncNotAssigned.Create('FFuncSetInput not assigned');}
+  if (not Assigned(dllFuncSetInput)) then
+    raise ERCSFuncNotAssigned.Create('FFuncSetInput not assigned');
+
+  res := dllFuncSetInput(module, port, state);
+
+  if (res = RCS_MODULE_INVALID_ADDR) then
+    raise ERCSModuleNotAvailable.Create('Module '+IntToStr(module)+' not available on bus!')
+  else if (res = RCS_MODULE_FAILED) then
+    raise ERCSModuleFailed.Create('Module '+IntToStr(module)+' failed!')
+  else if (res = RCS_PORT_INVALID_NUMBER) then
+    raise ERCSInvalidModulePort.Create('Invalid port number!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-function TRCSIFace.GetOutput(module, Port:Integer):Integer;
+function TRCSIFace.GetOutput(module, port:Integer):Integer;
  begin
   if (not Assigned(dllFuncGetOutput)) then
     raise ERCSFuncNotAssigned.Create('FFuncGetOutput not assigned');
 
-  Result := dllFuncGetOutput(module, Port);
+  Result := dllFuncGetOutput(module, port);
 
   if (Result = RCS_NOT_STARTED) then
     raise ERCSNotStarted.Create('Railroad Control System not started!')
