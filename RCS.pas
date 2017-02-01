@@ -181,6 +181,7 @@ type
      destructor Destroy(); override;
 
      procedure Open();                                                           // otevrit zarizeni
+     procedure OpenDevice(device:string; persist:boolean);
      procedure Close();                                                          // uzavrit zarizeni
 
      procedure Start();                                                          // spustit komunikaci
@@ -644,7 +645,21 @@ var res:Integer;
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-// TODO: OpenDevice
+procedure TRCSIFace.OpenDevice(device:string; persist:boolean);
+var res:Integer;
+ begin
+  if (not Assigned(dllFuncOpenDevice)) then
+    raise ERCSFuncNotAssigned.Create('FFuncOpenDevice not assigned');
+
+  res := dllFuncOpenDevice(PChar(device), persist);
+
+  if (res = RCS_ALREADY_OPENNED) then
+    raise ERCSAlreadyOpened.Create('Device already opened!')
+  else if (res = RCS_CANNOT_OPEN_PORT) then
+    raise ERCSCannotOpenPort.Create('Cannot open this port!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
+end;
 
 procedure TRCSIFace.Close();
 var res:Integer;
