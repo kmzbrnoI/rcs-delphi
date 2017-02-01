@@ -213,6 +213,7 @@ type
      // communication start/stop
      procedure Start();                                                          // spustit komunikaci
      procedure Stop();                                                           // zastavit komunikaci
+     function Started():boolean;
 
      procedure SetOutput(module, port: Integer; state: Integer);                // nastavit vystupni port
      function GetInput(module, port: Integer): TRCSInputState;                   // vratit hodnotu na vstupnim portu
@@ -672,6 +673,14 @@ begin
     raise ERCSNotStarted.Create('Device not started, cannot stop!')
   else if (res <> 0) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
+end;
+
+function TRCSIFace.Started():boolean;
+begin
+  if (not Assigned(dllFuncStarted)) then
+    raise ERCSFuncNotAssigned.Create('FFuncStarted not assigned')
+  else
+    Result := dllFuncStarted();
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
