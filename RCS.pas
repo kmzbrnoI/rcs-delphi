@@ -207,39 +207,41 @@ type
      function GetLogLevel():TRCSLogLevel;
 
      // dialogs
-     procedure ShowConfigDialog();                                               // zobrazit konfiguracni dialog knihovny
-     procedure HideConfigDialog();                                               // skryt konfiguracni dialog knihovny
+     procedure ShowConfigDialog();
+     procedure HideConfigDialog();
 
      // device open/close
-     procedure Open();                                                           // otevrit zarizeni
+     procedure Open();
      procedure OpenDevice(device:string; persist:boolean);
      procedure Close();
      function Opened():boolean;
 
      // communication start/stop
-     procedure Start();                                                          // spustit komunikaci
-     procedure Stop();                                                           // zastavit komunikaci
+     procedure Start();
+     procedure Stop();
      function Started():boolean;
 
      // I/O functions:
-     procedure SetOutput(module, port: Integer; state: Integer);                // nastavit vystupni port
-     function GetInput(module, port: Integer): TRCSInputState;                   // vratit hodnotu na vstupnim portu
-     procedure SetInput(module, port: Integer; State : Integer);                 // nastavit vstupni port (pro debug ucely)
-     function GetOutput(module, port:Integer):Integer;                            // ziskani stavu vystupu
+     procedure SetOutput(module, port: Integer; state: Integer);
+     function GetInput(module, port: Integer): TRCSInputState;
+     procedure SetInput(module, port: Integer; State : Integer);
+     function GetOutput(module, port:Integer):Integer;
 
      // MTB-USB board:
      function GetDeviceCount():Integer;
      function GetDeviceSerial(index:Integer):string;
 
      // modules:
-     function GetModuleName(module:Cardinal):string;                              // vrati jmeno modulu
-     function IsModule(Module:Cardinal):boolean;                           // vrati jestli modul existuje
-     function GetModuleType(Module:Cardinal):Integer;                              // vrati typ modulu
-     function GetModuleFW(Module:Cardinal):string;                          // vrati verzi FW v modulu
+     function IsModule(Module:Cardinal):boolean;
+     function IsModuleFailure(module:Cardinal):Boolean;
+     function GetModuleCount():Cardinal;
+     function GetModuleType(Module:Cardinal):Integer;
+     function GetModuleName(module:Cardinal):string;
+     function GetModuleFW(Module:Cardinal):string;
 
      // versions:
-     function GetDllVersion():string;                                         // vrati verzi MTBdrv drivery v knihovne
-     function GetDeviceVersion():string;                                         // vrati verzi FW v MTB-USB desce
+     function GetDllVersion():string;
+     function GetDeviceVersion():string;
 
      property BeforeOpen:TNotifyEvent read eBeforeOpen write eBeforeOpen;
      property AfterOpen:TNotifyEvent read eAfterOpen write eAfterOpen;
@@ -805,6 +807,22 @@ function TRCSIFace.IsModule(Module:Cardinal):boolean;
     Result := dllFuncIsModule(Module)
   else
     raise ERCSFuncNotAssigned.Create('FFuncModuleExists not assigned');
+ end;
+
+function TRCSIFace.IsModuleFailure(module:Cardinal):Boolean;
+ begin
+  if (Assigned(dllFuncIsModuleFailure)) then
+    Result := dllFuncIsModuleFailure(Module)
+  else
+    raise ERCSFuncNotAssigned.Create('FFuncIsModuleFailure not assigned');
+ end;
+
+function TRCSIFace.GetModuleCount():Cardinal;
+ begin
+  if (Assigned(dllFuncGetModuleCount)) then
+    Result := dllFuncGetModuleCount()
+  else
+    raise ERCSFuncNotAssigned.Create('FFuncGetModuleCount not assigned');
  end;
 
 function TRCSIFace.GetModuleType(Module:Cardinal):Integer;
