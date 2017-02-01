@@ -186,10 +186,16 @@ type
 
   public
 
-    unbound: TList<string>;                                                     // list of unbound functions
+    // list of unbound functions
+    unbound: TList<string>;
 
      constructor Create();
      destructor Destroy(); override;
+
+     // load a library
+     procedure LoadLib();
+
+     ////////////////////////////////////////////////////////////////////
 
      // file I/O
      procedure LoadConfig(fn:string);
@@ -215,23 +221,26 @@ type
      procedure Stop();                                                           // zastavit komunikaci
      function Started():boolean;
 
+     // I/O functions:
      procedure SetOutput(module, port: Integer; state: Integer);                // nastavit vystupni port
      function GetInput(module, port: Integer): TRCSInputState;                   // vratit hodnotu na vstupnim portu
      procedure SetInput(module, port: Integer; State : Integer);                 // nastavit vstupni port (pro debug ucely)
      function GetOutput(module, port:Integer):Integer;                            // ziskani stavu vystupu
 
-     function GetDllVersion():string;                                         // vrati verzi MTBdrv drivery v knihovne
-     function GetDeviceVersion():string;                                         // vrati verzi FW v MTB-USB desce
+     // MTB-USB board:
+     function GetDeviceCount():Integer;
+     function GetDeviceSerial(index:Integer):string;
 
+     // modules:
      function GetModuleName(module:Cardinal):string;                              // vrati jmeno modulu
-
      function IsModule(Module:Cardinal):boolean;                           // vrati jestli modul existuje
      function GetModuleType(Module:Cardinal):Integer;                              // vrati typ modulu
      function GetModuleFW(Module:Cardinal):string;                          // vrati verzi FW v modulu
 
-     procedure LoadLib();                                                        // nacte knihovnu
+     // versions:
+     function GetDllVersion():string;                                         // vrati verzi MTBdrv drivery v knihovne
+     function GetDeviceVersion():string;                                         // vrati verzi FW v MTB-USB desce
 
-     // eventy z TMTBIFace do rodice:
      property BeforeOpen:TNotifyEvent read eBeforeOpen write eBeforeOpen;
      property AfterOpen:TNotifyEvent read eAfterOpen write eAfterOpen;
      property BeforeClose:TNotifyEvent read eBeforeClose write eBeforeClose;
@@ -767,6 +776,25 @@ function TRCSIFace.GetOutput(module, port:Integer):Integer;
 
 ////////////////////////////////////////////////////////////////////////////////
 // MTB-USB board:
+
+function TRCSIFace.GetDeviceCount():Integer;
+ begin
+  if (Assigned(dllFuncGetDeviceCount)) then
+    Result := dllFuncGetDeviceCount()
+  else
+    raise ERCSFuncNotAssigned.Create('FFuncGetDeviceCount not assigned');
+ end;
+
+function TRCSIFace.GetDeviceSerial(index:Integer):string;
+const STR_LEN = 64;
+var str:string[STR_LEN];
+ begin
+  if (not Assigned(dllFuncGetDeviceSerial)) then
+    raise ERCSFuncNotAssigned.Create('FFuncGetDevicSerial not assigned');
+
+  dllFuncGetDeviceSerial(index, @str, STR_LEN);
+  Result := string(str);
+ end;
 
 ////////////////////////////////////////////////////////////////////////////////
 // modules:
