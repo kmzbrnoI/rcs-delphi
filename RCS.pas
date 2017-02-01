@@ -90,8 +90,8 @@ type
   ///////////////////////////////////////////////////////////////////////////
 
   TRCSInputState = (
-    low = 0,
-    high = 1,
+    isOff = 0,
+    isOn = 1,
     failure = RCS_MODULE_FAILED,
     notYetScanned = RCS_INPUT_NOT_YET_SCANNED
   );
@@ -168,6 +168,7 @@ type
     eOnLog : TLogEvent;
     eOnInputChange : TModuleChangeEvent;
     eOnOutputChange : TModuleChangeEvent;
+    eOnScanned : TNotifyEvent;
 
      procedure SetLibName(s: string);
 
@@ -213,6 +214,8 @@ type
      property OnLog:TLogEvent read eOnLog write eOnLog;
      property OnInputChanged:TModuleChangeEvent read eOnInputChange write eOnInputChange;
      property OnOutputChanged:TModuleChangeEvent read eOnOutputChange write eOnOutputChange;
+
+     property OnScanned:TNotifyEvent read eOnScanned write eOnScanned;
 
      property Lib: string read dllName write SetLibName;
 
@@ -293,6 +296,11 @@ procedure dllOnInputChanged(Sender: TObject; data:Pointer; module:byte); stdcall
 procedure dllOnOutputChanged(Sender: TObject; data:Pointer; module:byte); stdcall;
  begin
   if (Assigned(TRCSIFace(data).OnOutputChanged)) then TRCSIFace(data).OnOutputChanged(TRCSIFace(data), module);
+ end;
+
+procedure dllOnScanned(Sender: TObject; data:Pointer; module:byte); stdcall;
+ begin
+  if (Assigned(TRCSIFace(data).OnScanned)) then TRCSIFace(data).OnScanned(TRCSIFace(data));
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -383,8 +391,10 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   dllFuncOnChangedBind := TDllStdModuleChangeBind(GetProcAddress(dllHandle, 'BindOnOutputChanged'));
   if (Assigned(dllFuncOnChangedBind)) then dllFuncOnChangedBind(@dllOnOutputChanged, self);
 
-  // TODO: check all the functions bound?
+  dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindOnScanned'));
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllOnScanned, self);
 
+  // TODO: check all the functions bound?
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
