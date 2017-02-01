@@ -182,7 +182,7 @@ type
     eOnOutputChange : TModuleChangeEvent;
     eOnScanned : TNotifyEvent;
 
-     procedure SetLibName(s: string);
+     procedure Reset();
 
   public
 
@@ -192,8 +192,8 @@ type
      constructor Create();
      destructor Destroy(); override;
 
-     // load a library
-     procedure LoadLib();
+     procedure LoadLib(path:string);
+     procedure UnloadLib();
 
      ////////////////////////////////////////////////////////////////////
 
@@ -260,7 +260,7 @@ type
 
      property OnScanned:TNotifyEvent read eOnScanned write eOnScanned;
 
-     property Lib: string read dllName write SetLibName;
+     property Lib: string read dllName;
 
   end;
 
@@ -273,22 +273,83 @@ constructor TRCSIFace.Create();
  begin
   inherited;
   Self.unbound := TList<string>.Create();
+  Self.Reset();
  end;
 
 destructor TRCSIFace.Destroy();
  begin
+  if (Self.dllHandle <> 0) then Self.UnloadLib();
   Self.unbound.Free();
   inherited;
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-procedure TRCSIFace.SetLibName(s: string);
+procedure TRCSIFace.Reset();
  begin
-  if FileExists(s) then
-    dllName := s
-  else
-    raise ERCSLibNotFound.Create('Library '+s+' not found!');
+  dllFuncLoadConfig := nil;
+  dllFuncSaveConfig := nil;
+
+  // logging
+  dllFuncSetLogLevelFile := nil;
+  dllFuncSetLogLevel := nil;
+  dllFuncGetLogLevel := nil;
+
+  // dialogs
+  dllFuncShowConfigDialog := nil;
+  dllFuncHideConfigDialog := nil;
+
+  // open/close
+  dllFuncOpen := nil;
+  dllFuncOpenDevice := nil;
+  dllFuncClose := nil;
+  dllFuncOpened := nil;
+
+  // start/stop
+  dllFuncStart := nil;
+  dllFuncStop := nil;
+  dllFuncStarted := nil;
+
+  // ports IO
+  dllFuncGetInput := nil;
+  dllFuncGetOutput := nil;
+  dllFuncSetOutput := nil;
+  dllFuncSetInput := nil;
+
+  // devices
+  dllFuncGetDeviceCount := nil;
+  dllFuncGetDeviceSerial := nil;
+
+  // modules
+  dllFuncIsModule := nil;
+  dllFuncIsModuleFailure := nil;
+  dllFuncGetModuleCount := nil;
+  dllFuncGetModuleType := nil;
+  dllFuncGetModuleName := nil;
+  dllFuncGetModuleFW := nil;
+
+  // versions
+  dllFuncGetDeviceVersion := nil;
+  dllFuncGetVersion := nil;
+
+  // ------------------------------------------------------------------
+  // Events from TRCSIFace
+
+  eBeforeOpen := nil;
+  eAfterOpen := nil;
+  eBeforeClose := nil;
+  eAfterClose := nil;
+
+  eBeforeStart := nil;
+  eAfterStart := nil;
+  eBeforeStop := nil;
+  eAfterStop := nil;
+
+  eOnError := nil;
+  eOnLog := nil;
+  eOnInputChange := nil;
+  eOnOutputChange := nil;
+  eOnScanned := nil;
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -363,7 +424,7 @@ procedure dllOnScanned(Sender: TObject; data:Pointer; module:byte); stdcall;
 ////////////////////////////////////////////////////////////////////////////////
 // Load dll library
 
-procedure TRCSIFace.LoadLib();
+procedure TRCSIFace.LoadLib(path:string);
 var dllFuncStdNotifyBind: TDllStdNotifyBind;
     dllFuncOnErrorBind: TDllStdErrorBind;
     dllFuncOnLogBind: TDllStdLogBind;
@@ -371,9 +432,12 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
  begin
   Self.unbound.Clear();
 
+  if (dllHandle <> 0) then Self.UnloadLib();
+
+  dllName := path;
   dllHandle := LoadLibrary(PChar(dllName));
   if (dllHandle = 0) then
-    raise ERCSCannotLoadLib.Create('Library not loaded');
+    raise ERCSCannotLoadLib.Create('Cannot load library!');
 
   // config file load/save
   dllFuncLoadConfig := TDllFileIO(GetProcAddress(dllHandle, 'LoadConfig'));
@@ -503,6 +567,15 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindOnScanned'));
   if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllOnScanned, self)
   else unbound.Add('BindOnScanned');
+ end;
+
+procedure TRCSIFace.UnloadLib();
+ begin
+  if (Self.dllHandle = 0) then
+    raise ERCSNoLibLoaded.Create('No library laoded, cannot unload!');
+
+  FreeLibrary(Self.dllHandle);
+  Self.Reset();
  end;
 
 ////////////////////////////////////////////////////////////////////////////////

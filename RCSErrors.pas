@@ -125,6 +125,7 @@ type
   ERCSFuncNotAssigned = class(RCSException);
   ERCSLibNotFound = class(RCSException);
   ERCSCannotLoadLib = class(RCSException);
+  ERCSNoLibLoaded = class(RCSException);
 
 implementation
 
