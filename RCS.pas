@@ -40,7 +40,7 @@ unit RCS;
 interface
 
 uses
-  SysUtils, Classes, Windows, RCSErrors;
+  SysUtils, Classes, Windows, RCSErrors, Generics.Collections;
 
 type
   ///////////////////////////////////////////////////////////////////////////
@@ -175,6 +175,11 @@ type
 
   public
 
+    unbound: TList<string>;                                                     // list of unbound functions
+
+     constructor Create();
+     destructor Destroy(); override;
+
      procedure Open();                                                           // otevrit zarizeni
      procedure Close();                                                          // uzavrit zarizeni
 
@@ -224,6 +229,20 @@ type
 
 
 implementation
+
+////////////////////////////////////////////////////////////////////////////////
+
+constructor TRCSIFace.Create();
+ begin
+  inherited;
+  Self.unbound := TList<string>.Create();
+ end;
+
+destructor TRCSIFace.Destroy();
+ begin
+  Self.unbound.Free();
+  inherited;
+ end;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -313,90 +332,140 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
     dllFuncOnLogBind: TDllStdLogBind;
     dllFuncOnChangedBind: TDllStdModuleChangeBind;
  begin
+  Self.unbound.Clear();
+
   dllHandle := LoadLibrary(PChar(dllName));
   if (dllHandle = 0) then
     raise ERCSCannotLoadLib.Create('Library not loaded');
 
   // config file load/save
   dllFuncLoadConfig := TDllFileIO(GetProcAddress(dllHandle, 'LoadConfig'));
+  if (not Assigned(dllFuncLoadConfig)) then unbound.Add('LoadConfig');
   dllFuncSaveConfig := TDllFileIO(GetProcAddress(dllHandle, 'SaveConfig'));
+  if (not Assigned(dllFuncSaveConfig)) then unbound.Add('SaveConfig');
 
   // logging
   dllFuncSetLogLevelFile := TDllSetLogLevel(GetProcAddress(dllHandle, 'SetLogLevelFile'));
+  if (not Assigned(dllFuncSetLogLevelFile)) then unbound.Add('SetLogLevelFile');
   dllFuncSetLogLevel     := TDllSetLogLevel(GetProcAddress(dllHandle, 'SetLogLevel'));
+  if (not Assigned(dllFuncSetLogLevel)) then unbound.Add('SetLogLevel');
   dllFuncGetLogLevel     := TDllGetLogLevel(GetProcAddress(dllHandle, 'GetLogLevel'));
+  if (not Assigned(dllFuncGetLogLevel)) then unbound.Add('GetLogLevel');
 
   // dialogs
-  dllFuncShowConfigDialog := TDllPGeneral(GetProcAddress(dllHandle, 'ShowCOnfigDialog'));
+  dllFuncShowConfigDialog := TDllPGeneral(GetProcAddress(dllHandle, 'ShowConfigDialog'));
+  if (not Assigned(dllFuncShowConfigDialog)) then unbound.Add('ShowConfigDialog');
   dllFuncHideConfigDialog := TDllPGeneral(GetProcAddress(dllHandle, 'HideConfigDialog'));
+  if (not Assigned(dllFuncHideConfigDialog)) then unbound.Add('HideConfigDialog');
 
   // open/close
   dllFuncOpen := TDllFGeneral(GetProcAddress(dllHandle, 'Open'));
+  if (not Assigned(dllFuncOpen)) then unbound.Add('Open');
   dllFuncOpenDevice := TDllOpenDevice(GetProcAddress(dllHandle, 'OpenDevice'));
+  if (not Assigned(dllFuncOpenDevice)) then unbound.Add('OpenDevice');
   dllFuncClose := TDllFGeneral(GetProcAddress(dllHandle, 'Close'));
+  if (not Assigned(dllFuncClose)) then unbound.Add('Close');
   dllFuncOpened := TDllBoolGetter(GetProcAddress(dllHandle, 'Opened'));
+  if (not Assigned(dllFuncOpened)) then unbound.Add('Opened');
 
   // start/stop
   dllFuncStart := TDllFGeneral(GetProcAddress(dllHandle, 'Start'));
+  if (not Assigned(dllFuncStart)) then unbound.Add('Start');
   dllFuncStop := TDllFGeneral(GetProcAddress(dllHandle, 'Stop'));
+  if (not Assigned(dllFuncStop)) then unbound.Add('Stop');
   dllFuncStarted := TDllBoolGetter(GetProcAddress(dllHandle, 'Started'));
+  if (not Assigned(dllFuncStarted)) then unbound.Add('Started');
 
   // ports IO
   dllFuncGetInput := TDllModuleGet(GetProcAddress(dllHandle, 'GetInput'));
+  if (not Assigned(dllFuncGetInput)) then unbound.Add('GetInput');
   dllFuncGetOutput := TDllModuleGet(GetProcAddress(dllHandle, 'GetOutput'));
+  if (not Assigned(dllFuncGetOutput)) then unbound.Add('GetOutput');
   dllFuncSetOutput := TDllModuleSet(GetProcAddress(dllHandle, 'SetOutput'));
+  if (not Assigned(dllFuncSetOutput)) then unbound.Add('SetOutput');
   dllFuncSetInput := TDllModuleSet(GetProcAddress(dllHandle, 'SetInput'));
+  if (not Assigned(dllFuncSetInput)) then unbound.Add('SetInput');
 
   // devices
   dllFuncGetDeviceCount := TDllFGeneral(GetProcAddress(dllHandle, 'GetDeviceCount'));
+  if (not Assigned(dllFuncGetDeviceCount)) then unbound.Add('GetDeviceCount');
   dllFuncGetDeviceSerial := TDllDeviceSerialGetter(GetProcAddress(dllHandle, 'GetDeviceSerial'));
+  if (not Assigned(dllFuncGetDeviceSerial)) then unbound.Add('GetDeviceSerial');
 
   // modules
   dllFuncIsModule := TDllModuleBoolGetter(GetProcAddress(dllHandle, 'IsModule'));
+  if (not Assigned(dllFuncIsModule)) then unbound.Add('IsModule');
   dllFuncIsModuleFailure := TDllModuleBoolGetter(GetProcAddress(dllHandle, 'IsModuleFailure'));
+  if (not Assigned(dllFuncIsModuleFailure)) then unbound.Add('IsModuleFailure');
   dllFuncGetModuleCount := TDllFCardGeneral(GetProcAddress(dllHandle, 'GetModuleCount'));
+  if (not Assigned(dllFuncGetModuleCount)) then unbound.Add('GetModuleCount');
   dllFuncGetModuleType := TDllModuleIntGetter(GetProcAddress(dllHandle, 'GetModuleType'));
+  if (not Assigned(dllFuncGetModuleType)) then unbound.Add('GetModuleType');
   dllFuncGetModuleName := TDllModuleStringGetter(GetProcAddress(dllHandle, 'GetModuleName'));
+  if (not Assigned(dllFuncGetModuleName)) then unbound.Add('GetModuleName');
   dllFuncGetModuleFW := TDllModuleStringGetter(GetProcAddress(dllHandle, 'GetModuleFW'));
+  if (not Assigned(dllFuncGetModuleFW)) then unbound.Add('GetModuleFW');
 
   // versions
   dllFuncGetDeviceVersion := TDllDeviceVersionGetter(GetProcAddress(dllHandle, 'GetDeviceVersion'));
+  if (not Assigned(dllFuncGetDeviceVersion)) then unbound.Add('GetDeviceVersion');
   dllFuncGetVersion := TDllVersionGetter(GetProcAddress(dllHandle, 'GetDriverVersion'));
+  if (not Assigned(dllFuncGetVersion)) then unbound.Add('GetDriverVersion');
 
   // events open/close
   dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindBeforeOpen'));
-  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllBeforeOpen, self);
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllBeforeOpen, self)
+  else unbound.Add('BindBeforeOpen');
+
   dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindAfterOpen'));
-  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllAfterOpen, self);
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllAfterOpen, self)
+  else unbound.Add('BindAfterOpen');
+
   dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindBeforeClose'));
-  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllBeforeClose, self);
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllBeforeClose, self)
+  else unbound.Add('BindBeforeClose');
+
   dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindAfterClose'));
-  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllAfterClose, self);
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllAfterClose, self)
+  else unbound.Add('BindAfterClose');
 
   // events start/stop
   dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindBeforeStart'));
-  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllBeforeStart, self);
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllBeforeStart, self)
+  else unbound.Add('BindBeforeStart');
+
   dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindAfterStart'));
-  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllAfterStart, self);
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllAfterStart, self)
+  else unbound.Add('BindAfterStart');
+
   dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindBeforeStop'));
-  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllBeforeStop, self);
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllBeforeStop, self)
+  else unbound.Add('BindBeforeStop');
+
   dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindAfterStop'));
-  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllAfterStop, self);
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllAfterStop, self)
+  else unbound.Add('BindAfterStop');
 
   // other events
   dllFuncOnErrorBind := TDllStdErrorBind(GetProcAddress(dllHandle, 'BindOnError'));
-  if (Assigned(dllFuncOnErrorBind)) then dllFuncOnErrorBind(@dllOnError, self);
+  if (Assigned(dllFuncOnErrorBind)) then dllFuncOnErrorBind(@dllOnError, self)
+  else unbound.Add('BindOnError');
+
   dllFuncOnLogBind := TDllStdLogBind(GetProcAddress(dllHandle, 'BindOnLog'));
-  if (Assigned(dllFuncOnLogBind)) then dllFuncOnLogBind(@dllOnLog, self);
+  if (Assigned(dllFuncOnLogBind)) then dllFuncOnLogBind(@dllOnLog, self)
+  else unbound.Add('BindOnLog');
+
   dllFuncOnChangedBind := TDllStdModuleChangeBind(GetProcAddress(dllHandle, 'BindOnInputChanged'));
-  if (Assigned(dllFuncOnChangedBind)) then dllFuncOnChangedBind(@dllOnInputChanged, self);
+  if (Assigned(dllFuncOnChangedBind)) then dllFuncOnChangedBind(@dllOnInputChanged, self)
+  else unbound.Add('BindOnInputChanged');
+
   dllFuncOnChangedBind := TDllStdModuleChangeBind(GetProcAddress(dllHandle, 'BindOnOutputChanged'));
-  if (Assigned(dllFuncOnChangedBind)) then dllFuncOnChangedBind(@dllOnOutputChanged, self);
+  if (Assigned(dllFuncOnChangedBind)) then dllFuncOnChangedBind(@dllOnOutputChanged, self)
+  else unbound.Add('BindOnOutputChanged');
 
   dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindOnScanned'));
-  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllOnScanned, self);
-
-  // TODO: check all the functions bound?
+  if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllOnScanned, self)
+  else unbound.Add('BindOnScanned');
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
