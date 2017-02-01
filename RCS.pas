@@ -200,10 +200,15 @@ type
      procedure SetLogLevel(loglevel:TRCSLogLevel);
      function GetLogLevel():TRCSLogLevel;
 
+     // dialogs
+     procedure ShowConfigDialog();                                               // zobrazit konfiguracni dialog knihovny
+     procedure HideConfigDialog();                                               // skryt konfiguracni dialog knihovny
+
      // device open/close
      procedure Open();                                                           // otevrit zarizeni
      procedure OpenDevice(device:string; persist:boolean);
-     procedure Close();                                                          // uzavrit zarizeni
+     procedure Close();
+     function Opened():boolean;
 
      // communication start/stop
      procedure Start();                                                          // spustit komunikaci
@@ -213,9 +218,6 @@ type
      function GetInput(module, port: Integer): TRCSInputState;                   // vratit hodnotu na vstupnim portu
      procedure SetInput(module, port: Integer; State : Integer);                 // nastavit vstupni port (pro debug ucely)
      function GetOutput(module, port:Integer):Integer;                            // ziskani stavu vystupu
-
-     procedure ShowConfigDialog();                                               // zobrazit konfiguracni dialog knihovny
-     procedure HideConfigDialog();                                               // skryt konfiguracni dialog knihovny
 
      function GetDllVersion():string;                                         // vrati verzi MTBdrv drivery v knihovne
      function GetDeviceVersion():string;                                         // vrati verzi FW v MTB-USB desce
@@ -697,6 +699,14 @@ var res:Integer;
     raise ERCSScanningNotFinished.Create('Initial scanning of modules not finished, cannot close!')
   else if (res <> 0) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
+ end;
+
+function TRCSIFace.Opened():boolean;
+ begin
+  if (not Assigned(dllFuncOpened)) then
+    raise ERCSFuncNotAssigned.Create('FFuncOpened not assigned')
+  else
+    Result := dllFuncOpened();
  end;
 
 procedure TRCSIFace.Start();
