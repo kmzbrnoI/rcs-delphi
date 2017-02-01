@@ -495,6 +495,70 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Parent should call these methods:
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+// file I/O
+
+procedure TRCSIFace.LoadConfig(fn:string);
+var res:Integer;
+ begin
+  if (not Assigned(dllFuncLoadConfig)) then
+    raise ERCSFuncNotAssigned.Create('FFuncLoadConfig not assigned');
+
+  res := dllFuncLoadConfig(PChar(fn));
+
+  if (res = RCS_FILE_CANNOT_ACCESS) then
+    raise ERCSCannotAccessFile.Create('Cannot read file '+fn+'!')
+  else if (res = RCS_FILE_DEVICE_OPENED) then
+    raise ERCSDeviceOpened.Create('Cannot reload config, device opened!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
+ end;
+
+procedure TRCSIFace.SaveConfig(fn:string);
+var res:Integer;
+ begin
+  if (not Assigned(dllFuncSaveConfig)) then
+    raise ERCSFuncNotAssigned.Create('FFuncSaveConfig not assigned');
+
+  res := dllFuncSaveConfig(PChar(fn));
+
+  if (res = RCS_FILE_CANNOT_ACCESS) then
+    raise ERCSCannotAccessFile.Create('Cannot write to file '+fn+'!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
+ end;
+
+////////////////////////////////////////////////////////////////////////////////
+// logging
+
+procedure TRCSIFace.SetLogLevelFile(loglevel:TRCSLogLevel);
+ begin
+  if (not Assigned(dllFuncSetLogLevelFile)) then
+    raise ERCSFuncNotAssigned.Create('FFuncSetLogLevelFile not assigned')
+  else
+    dllFuncSetLogLevelFile(Cardinal(loglevel));
+ end;
+
+procedure TRCSIFace.SetLogLevel(loglevel:TRCSLogLevel);
+ begin
+  if (not Assigned(dllFuncSetLogLevel)) then
+    raise ERCSFuncNotAssigned.Create('FFuncSetLogLevel not assigned')
+  else
+    dllFuncSetLogLevel(Cardinal(loglevel));
+ end;
+
+function TRCSIFace.GetLogLevel():TRCSLogLevel;
+ begin
+  if (not Assigned(dllFuncGetLogLevel)) then
+    raise ERCSFuncNotAssigned.Create('FFuncGetLogLevel not assigned')
+  else
+    Result := TRCSLogLevel(dllFuncGetLogLevel());
+ end;
+
+////////////////////////////////////////////////////////////////////////////////
+// dialogs:
 
 procedure TRCSIFace.ShowConfigDialog();
  begin
@@ -511,6 +575,107 @@ procedure TRCSIFace.HideConfigDialog();
   else
     raise ERCSFuncNotAssigned.Create('FFuncHideConfigDialog not assigned');
  end;
+
+////////////////////////////////////////////////////////////////////////////////
+// open/close:
+
+procedure TRCSIFace.Open();
+var res:Integer;
+ begin
+  if (not Assigned(dllFuncOpen)) then
+    raise ERCSFuncNotAssigned.Create('FFuncOpen not assigned');
+
+  res := dllFuncOpen();
+
+  if (res = RCS_ALREADY_OPENNED) then
+    raise ERCSAlreadyOpened.Create('Device already opened!')
+  else if (res = RCS_CANNOT_OPEN_PORT) then
+    raise ERCSCannotOpenPort.Create('Cannot open this port!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
+ end;
+
+procedure TRCSIFace.OpenDevice(device:string; persist:boolean);
+var res:Integer;
+ begin
+  if (not Assigned(dllFuncOpenDevice)) then
+    raise ERCSFuncNotAssigned.Create('FFuncOpenDevice not assigned');
+
+  res := dllFuncOpenDevice(PChar(device), persist);
+
+  if (res = RCS_ALREADY_OPENNED) then
+    raise ERCSAlreadyOpened.Create('Device already opened!')
+  else if (res = RCS_CANNOT_OPEN_PORT) then
+    raise ERCSCannotOpenPort.Create('Cannot open this port!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
+end;
+
+procedure TRCSIFace.Close();
+var res:Integer;
+ begin
+  if (not Assigned(dllFuncClose)) then
+    raise ERCSFuncNotAssigned.Create('FFuncClose not assigned');
+
+  res := dllFuncClose();
+
+  if (res = RCS_NOT_OPENED) then
+    raise ERCSNotOpened.Create('Device not opened!')
+  else if (res = RCS_SCANNING_NOT_FINISHED) then
+    raise ERCSScanningNotFinished.Create('Initial scanning of modules not finished, cannot close!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
+ end;
+
+function TRCSIFace.Opened():boolean;
+ begin
+  if (not Assigned(dllFuncOpened)) then
+    raise ERCSFuncNotAssigned.Create('FFuncOpened not assigned')
+  else
+    Result := dllFuncOpened();
+ end;
+
+////////////////////////////////////////////////////////////////////////////////
+// start/stop:
+
+procedure TRCSIFace.Start();
+var res:Integer;
+begin
+  if (not Assigned(dllFuncStart)) then
+    raise ERCSFuncNotAssigned.Create('FFuncStart not assigned');
+
+  res := dllFuncStart();
+
+  if (res = RCS_ALREADY_STARTED) then
+    raise ERCSAlreadyStarted.Create('Communication already started!')
+  else if (res = RCS_FIRMWARE_TOO_LOW) then
+    raise ERCSFirmwareTooLow.Create('RCS-PC module firware too low!')
+  else if (res = RCS_NO_MODULES) then
+    raise ERCSNoModules.Create('No modules found, cannot start!')
+  else if (res = RCS_NOT_OPENED) then
+    raise ERCSNotOpened.Create('Device not opened, cannot start!')
+  else if (res = RCS_SCANNING_NOT_FINISHED) then
+    raise ERCSScanningNotFinished.Create('Initial scanning of modules not finished, cannot start!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
+end;
+
+procedure TRCSIFace.Stop();
+var res:Integer;
+begin
+  if (not Assigned(dllFuncStop)) then
+    raise ERCSFuncNotAssigned.Create('FFuncStop not assigned');
+
+  res := dllFuncStop();
+
+  if (res = RCS_NOT_STARTED) then
+    raise ERCSNotStarted.Create('Device not started, cannot stop!')
+  else if (res <> 0) then
+    raise ERCSGeneralException.Create('General exception in RCS library!');
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+// module I/O:
 
 function TRCSIFace.GetInput(module, port: Integer):TRCSInputState;
 var tmp:Integer;
@@ -591,32 +756,11 @@ function TRCSIFace.GetOutput(module, port:Integer):Integer;
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-function TRCSIFace.GetDeviceVersion():string;
-const STR_LEN = 32;
-var str:string[STR_LEN];
-    res:Integer;
- begin
-  if (not Assigned(dllFuncGetDeviceVersion)) then
-    raise ERCSFuncNotAssigned.Create('FFuncGetLibVersion not assigned');
+////////////////////////////////////////////////////////////////////////////////
+// MTB-USB board:
 
-  res := dllFuncGetDeviceVersion(@str, STR_LEN);
-
-  if (res = RCS_DEVICE_DISCONNECTED) then
-    raise ERCSNotOpened.Create('Device not opened, cannot read version!');
-
-  Result := string(str);
- end;
-
-function TRCSIFace.GetDllVersion():String;
-const STR_LEN = 32;
-var str:string[STR_LEN];
- begin
-  if (not Assigned(dllFuncGetVersion)) then
-    raise ERCSFuncNotAssigned.Create('FFuncGetDriverVersion not assigned');
-
-  dllFuncGetVersion(@str, STR_LEN);
-  Result := string(str);
- end;
+////////////////////////////////////////////////////////////////////////////////
+// modules:
 
 function TRCSIFace.IsModule(Module:Cardinal):boolean;
  begin
@@ -653,98 +797,6 @@ var str:string[STR_LEN];
   Result := string(str);
  end;
 
-procedure TRCSIFace.Open();
-var res:Integer;
- begin
-  if (not Assigned(dllFuncOpen)) then
-    raise ERCSFuncNotAssigned.Create('FFuncOpen not assigned');
-
-  res := dllFuncOpen();
-
-  if (res = RCS_ALREADY_OPENNED) then
-    raise ERCSAlreadyOpened.Create('Device already opened!')
-  else if (res = RCS_CANNOT_OPEN_PORT) then
-    raise ERCSCannotOpenPort.Create('Cannot open this port!')
-  else if (res <> 0) then
-    raise ERCSGeneralException.Create('General exception in RCS library!');
- end;
-
-procedure TRCSIFace.OpenDevice(device:string; persist:boolean);
-var res:Integer;
- begin
-  if (not Assigned(dllFuncOpenDevice)) then
-    raise ERCSFuncNotAssigned.Create('FFuncOpenDevice not assigned');
-
-  res := dllFuncOpenDevice(PChar(device), persist);
-
-  if (res = RCS_ALREADY_OPENNED) then
-    raise ERCSAlreadyOpened.Create('Device already opened!')
-  else if (res = RCS_CANNOT_OPEN_PORT) then
-    raise ERCSCannotOpenPort.Create('Cannot open this port!')
-  else if (res <> 0) then
-    raise ERCSGeneralException.Create('General exception in RCS library!');
-end;
-
-procedure TRCSIFace.Close();
-var res:Integer;
- begin
-  if (not Assigned(dllFuncClose)) then
-    raise ERCSFuncNotAssigned.Create('FFuncClose not assigned');
-
-  res := dllFuncClose();
-
-  if (res = RCS_NOT_OPENED) then
-    raise ERCSNotOpened.Create('Device not opened!')
-  else if (res = RCS_SCANNING_NOT_FINISHED) then
-    raise ERCSScanningNotFinished.Create('Initial scanning of modules not finished, cannot close!')
-  else if (res <> 0) then
-    raise ERCSGeneralException.Create('General exception in RCS library!');
- end;
-
-function TRCSIFace.Opened():boolean;
- begin
-  if (not Assigned(dllFuncOpened)) then
-    raise ERCSFuncNotAssigned.Create('FFuncOpened not assigned')
-  else
-    Result := dllFuncOpened();
- end;
-
-procedure TRCSIFace.Start();
-var res:Integer;
-begin
-  if (not Assigned(dllFuncStart)) then
-    raise ERCSFuncNotAssigned.Create('FFuncStart not assigned');
-
-  res := dllFuncStart();
-
-  if (res = RCS_ALREADY_STARTED) then
-    raise ERCSAlreadyStarted.Create('Communication already started!')
-  else if (res = RCS_FIRMWARE_TOO_LOW) then
-    raise ERCSFirmwareTooLow.Create('RCS-PC module firware too low!')
-  else if (res = RCS_NO_MODULES) then
-    raise ERCSNoModules.Create('No modules found, cannot start!')
-  else if (res = RCS_NOT_OPENED) then
-    raise ERCSNotOpened.Create('Device not opened, cannot start!')
-  else if (res = RCS_SCANNING_NOT_FINISHED) then
-    raise ERCSScanningNotFinished.Create('Initial scanning of modules not finished, cannot start!')
-  else if (res <> 0) then
-    raise ERCSGeneralException.Create('General exception in RCS library!');
-end;
-
-procedure TRCSIFace.Stop();
-var res:Integer;
-begin
-  if (not Assigned(dllFuncStop)) then
-    raise ERCSFuncNotAssigned.Create('FFuncStop not assigned');
-
-  res := dllFuncStop();
-
-  if (res = RCS_NOT_STARTED) then
-    raise ERCSNotStarted.Create('Device not started, cannot stop!')
-  else if (res <> 0) then
-    raise ERCSGeneralException.Create('General exception in RCS library!');
-end;
-
 function TRCSIFace.GetModuleFW(Module:Cardinal):string;
 const STR_LEN = 16;
 var str:string[STR_LEN];
@@ -762,63 +814,33 @@ var str:string[STR_LEN];
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
-// file I/O
+// versions:
 
-procedure TRCSIFace.LoadConfig(fn:string);
-var res:Integer;
+function TRCSIFace.GetDeviceVersion():string;
+const STR_LEN = 32;
+var str:string[STR_LEN];
+    res:Integer;
  begin
-  if (not Assigned(dllFuncLoadConfig)) then
-    raise ERCSFuncNotAssigned.Create('FFuncLoadConfig not assigned');
+  if (not Assigned(dllFuncGetDeviceVersion)) then
+    raise ERCSFuncNotAssigned.Create('FFuncGetLibVersion not assigned');
 
-  res := dllFuncLoadConfig(PChar(fn));
+  res := dllFuncGetDeviceVersion(@str, STR_LEN);
 
-  if (res = RCS_FILE_CANNOT_ACCESS) then
-    raise ERCSCannotAccessFile.Create('Cannot read file '+fn+'!')
-  else if (res = RCS_FILE_DEVICE_OPENED) then
-    raise ERCSDeviceOpened.Create('Cannot reload config, device opened!')
-  else if (res <> 0) then
-    raise ERCSGeneralException.Create('General exception in RCS library!');
+  if (res = RCS_DEVICE_DISCONNECTED) then
+    raise ERCSNotOpened.Create('Device not opened, cannot read version!');
+
+  Result := string(str);
  end;
 
-procedure TRCSIFace.SaveConfig(fn:string);
-var res:Integer;
+function TRCSIFace.GetDllVersion():String;
+const STR_LEN = 32;
+var str:string[STR_LEN];
  begin
-  if (not Assigned(dllFuncSaveConfig)) then
-    raise ERCSFuncNotAssigned.Create('FFuncSaveConfig not assigned');
+  if (not Assigned(dllFuncGetVersion)) then
+    raise ERCSFuncNotAssigned.Create('FFuncGetDriverVersion not assigned');
 
-  res := dllFuncSaveConfig(PChar(fn));
-
-  if (res = RCS_FILE_CANNOT_ACCESS) then
-    raise ERCSCannotAccessFile.Create('Cannot write to file '+fn+'!')
-  else if (res <> 0) then
-    raise ERCSGeneralException.Create('General exception in RCS library!');
- end;
-
-////////////////////////////////////////////////////////////////////////////////
-// logging
-
-procedure TRCSIFace.SetLogLevelFile(loglevel:TRCSLogLevel);
- begin
-  if (not Assigned(dllFuncSetLogLevelFile)) then
-    raise ERCSFuncNotAssigned.Create('FFuncSetLogLevelFile not assigned')
-  else
-    dllFuncSetLogLevelFile(Cardinal(loglevel));
- end;
-
-procedure TRCSIFace.SetLogLevel(loglevel:TRCSLogLevel);
- begin
-  if (not Assigned(dllFuncSetLogLevel)) then
-    raise ERCSFuncNotAssigned.Create('FFuncSetLogLevel not assigned')
-  else
-    dllFuncSetLogLevel(Cardinal(loglevel));
- end;
-
-function TRCSIFace.GetLogLevel():TRCSLogLevel;
- begin
-  if (not Assigned(dllFuncGetLogLevel)) then
-    raise ERCSFuncNotAssigned.Create('FFuncGetLogLevel not assigned')
-  else
-    Result := TRCSLogLevel(dllFuncGetLogLevel());
+  dllFuncGetVersion(@str, STR_LEN);
+  Result := string(str);
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
