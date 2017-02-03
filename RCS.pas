@@ -328,25 +328,6 @@ procedure TRCSIFace.Reset();
   // versions
   dllFuncGetDeviceVersion := nil;
   dllFuncGetVersion := nil;
-
-  // ------------------------------------------------------------------
-  // Events from TRCSIFace
-
-  eBeforeOpen := nil;
-  eAfterOpen := nil;
-  eBeforeClose := nil;
-  eAfterClose := nil;
-
-  eBeforeStart := nil;
-  eAfterStart := nil;
-  eBeforeStop := nil;
-  eAfterStop := nil;
-
-  eOnError := nil;
-  eOnLog := nil;
-  eOnInputChange := nil;
-  eOnOutputChange := nil;
-  eOnScanned := nil;
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
