@@ -394,7 +394,7 @@ procedure dllOnOutputChanged(Sender: TObject; data:Pointer; module:byte); stdcal
   if (Assigned(TRCSIFace(data).OnOutputChanged)) then TRCSIFace(data).OnOutputChanged(TRCSIFace(data), module);
  end;
 
-procedure dllOnScanned(Sender: TObject; data:Pointer; module:byte); stdcall;
+procedure dllOnScanned(Sender: TObject; data:Pointer); stdcall;
  begin
   if (Assigned(TRCSIFace(data).OnScanned)) then TRCSIFace(data).OnScanned(TRCSIFace(data));
  end;
