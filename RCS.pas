@@ -102,7 +102,8 @@ type
     isOff = 0,
     isOn = 1,
     failure = RCS_MODULE_FAILED,
-    notYetScanned = RCS_INPUT_NOT_YET_SCANNED
+    notYetScanned = RCS_INPUT_NOT_YET_SCANNED,
+    unavailable = RCS_MODULE_INVALID_ADDR
   );
 
   ///////////////////////////////////////////////////////////////////////////
@@ -758,8 +759,6 @@ var tmp:Integer;
 
   if (tmp = RCS_NOT_STARTED) then
     raise ERCSNotStarted.Create('Railroad Control System not started!')
-  else if (tmp = RCS_MODULE_INVALID_ADDR) then
-    raise ERCSInvalidModuleAddr.Create('Invalid module address: '+IntToStr(module)+'!')
   else if (tmp = RCS_PORT_INVALID_NUMBER) then
     raise ERCSInvalidModulePort.Create('Invalid port number!')
   else if (tmp = RCS_GENERAL_EXCEPTION) then
