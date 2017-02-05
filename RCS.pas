@@ -42,6 +42,15 @@ interface
 uses
   SysUtils, Classes, Windows, RCSErrors, Generics.Collections;
 
+const
+  _RCS_MOD_NONE = $0;
+  _RCS_MOD_MTB_POT_ID = $10;
+  _RCS_MOD_MTB_REGP_ID = $30;
+  _RCS_MOD_MTB_UNI_ID = $40;
+  _RCS_MOD_MTB_UNIOUT_ID = $50;
+  _RCS_MOD_MTB_TTL_ID = $60;
+  _RCS_MOD_MTB_TTLOUT_ID = $70;
+
 type
   ///////////////////////////////////////////////////////////////////////////
   // Events called from library to TRCSIFace:
@@ -749,7 +758,7 @@ var tmp:Integer;
   if (tmp = RCS_NOT_STARTED) then
     raise ERCSNotStarted.Create('Railroad Control System not started!')
   else if (tmp = RCS_MODULE_INVALID_ADDR) then
-    raise ERCSInvalidModuleAddr.Create('Invalid module adderess: '+IntToStr(module)+'!')
+    raise ERCSInvalidModuleAddr.Create('Invalid module address: '+IntToStr(module)+'!')
   else if (tmp = RCS_PORT_INVALID_NUMBER) then
     raise ERCSInvalidModulePort.Create('Invalid port number!')
   else if (tmp = RCS_GENERAL_EXCEPTION) then
