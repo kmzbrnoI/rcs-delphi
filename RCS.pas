@@ -840,12 +840,14 @@ function TRCSIFace.GetDeviceCount():Integer;
 
 function TRCSIFace.GetDeviceSerial(index:Integer):string;
 const STR_LEN = 64;
-var str:string[STR_LEN];
+var str:string;
  begin
+  SetLength(str, STR_LEN);
+
   if (not Assigned(dllFuncGetDeviceSerial)) then
     raise ERCSFuncNotAssigned.Create('FFuncGetDevicSerial not assigned');
 
-  dllFuncGetDeviceSerial(index, @str, STR_LEN);
+  dllFuncGetDeviceSerial(index, @str[1], STR_LEN);
   Result := string(str);
  end;
 
@@ -889,13 +891,15 @@ function TRCSIFace.GetModuleType(Module:Cardinal):Integer;
 
 function TRCSIFace.GetModuleName(Module:Cardinal):string;
 const STR_LEN = 128;
-var str:string[STR_LEN];
+var str:string;
     res:Integer;
  begin
+  SetLength(str, STR_LEN);
+
   if (not Assigned(dllFuncGetModuleName)) then
     raise ERCSFuncNotAssigned.Create('FFuncGetModuleName not assigned');
 
-  res := dllFuncGetModuleName(Module, @str, STR_LEN);
+  res := dllFuncGetModuleName(Module, @str[1], STR_LEN);
 
   if (res = RCS_MODULE_INVALID_ADDR) then
     raise ERCSInvalidModuleAddr.Create('Invalid module address : '+IntToStr(Module)+'!');
@@ -905,13 +909,15 @@ var str:string[STR_LEN];
 
 function TRCSIFace.GetModuleFW(Module:Cardinal):string;
 const STR_LEN = 16;
-var str:string[STR_LEN];
+var str:string;
     res:Integer;
  begin
+  SetLength(str, STR_LEN);
+
   if (not Assigned(dllFuncGetModuleFW)) then
     raise ERCSFuncNotAssigned.Create('FFuncGetModuleFirmware not assigned');
 
-  res := dllFuncGetModuleFW(Module, @str, STR_LEN);
+  res := dllFuncGetModuleFW(Module, @str[1], STR_LEN);
 
   if (res = RCS_MODULE_INVALID_ADDR) then
     raise ERCSInvalidModuleAddr.Create('Invalid module adderess: '+IntToStr(Module)+'!')
@@ -924,13 +930,15 @@ var str:string[STR_LEN];
 
 function TRCSIFace.GetDeviceVersion():string;
 const STR_LEN = 32;
-var str:string[STR_LEN];
+var str:string;
     res:Integer;
  begin
+  SetLength(str, STR_LEN);
+
   if (not Assigned(dllFuncGetDeviceVersion)) then
     raise ERCSFuncNotAssigned.Create('FFuncGetLibVersion not assigned');
 
-  res := dllFuncGetDeviceVersion(@str, STR_LEN);
+  res := dllFuncGetDeviceVersion(@str[1], STR_LEN);
 
   if (res = RCS_DEVICE_DISCONNECTED) then
     raise ERCSNotOpened.Create('Device not opened, cannot read version!');
@@ -940,12 +948,14 @@ var str:string[STR_LEN];
 
 function TRCSIFace.GetDllVersion():String;
 const STR_LEN = 32;
-var str:string[STR_LEN];
+var str:string;
  begin
+  SetLength(str, STR_LEN);
+
   if (not Assigned(dllFuncGetVersion)) then
     raise ERCSFuncNotAssigned.Create('FFuncGetDriverVersion not assigned');
 
-  dllFuncGetVersion(@str, STR_LEN);
+  dllFuncGetVersion(@str[1], STR_LEN);
   Result := string(str);
  end;
 
