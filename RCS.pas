@@ -245,6 +245,7 @@ type
      function GetModuleType(Module:Cardinal):Integer;
      function GetModuleName(module:Cardinal):string;
      function GetModuleFW(Module:Cardinal):string;
+     function ModuleTypeToStr(typ:Integer):string;
 
      // versions:
      function GetDllVersion():string;
@@ -947,6 +948,22 @@ var str:string[STR_LEN];
   dllFuncGetVersion(@str, STR_LEN);
   Result := string(str);
  end;
+
+////////////////////////////////////////////////////////////////////////////////
+
+function TRCSIFace.ModuleTypeToStr(typ:Integer):string;
+begin
+ case (typ) of
+  _RCS_MOD_MTB_POT_ID    : Result := 'MTB-POT';
+  _RCS_MOD_MTB_REGP_ID   : Result := 'MTB-REG';
+  _RCS_MOD_MTB_UNI_ID    : Result := 'MTB-UNI';
+  _RCS_MOD_MTB_UNIOUT_ID : Result := 'MTB-UNIo';
+  _RCS_MOD_MTB_TTL_ID    : Result := 'MTB-TTL';
+  _RCS_MOD_MTB_TTLOUT_ID : Result := 'MTB-TTLo'
+ else
+  Result := 'Unknown';
+ end;
+end;
 
 ////////////////////////////////////////////////////////////////////////////////
 
