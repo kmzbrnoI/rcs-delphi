@@ -64,7 +64,7 @@ type
   // Events called from TRCSIFace to parent:
 
   TLogEvent = procedure (Sender: TObject; logLevel:Integer; msg:string) of object;
-  TErrorEvent = procedure (Sender: TObject; errValue: word; errAddr: byte; errMsg:string) of object;
+  TErrorEvent = procedure (Sender: TObject; errValue: word; errAddr: byte; errMsg:PChar) of object;
   TModuleChangeEvent = procedure (Sender: TObject; module: byte) of object;
 
   ///////////////////////////////////////////////////////////////////////////
