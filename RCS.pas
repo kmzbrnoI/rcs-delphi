@@ -165,6 +165,7 @@ type
     dllFuncIsModuleFailure: TDllModuleBoolGetter;
     dllFuncGetModuleCount : TDllFCardGeneral;
     dllFuncGetModuleType : TDllModuleIntGetter;
+    dllFuncGetModuleTypeStr : TDllModuleStringGetter;
     dllFuncGetModuleName : TDllModuleStringGetter;
     dllFuncGetModuleFW : TDllModuleStringGetter;
 
@@ -243,10 +244,9 @@ type
      function IsModule(Module:Cardinal):boolean;
      function IsModuleFailure(module:Cardinal):Boolean;
      function GetModuleCount():Cardinal;
-     function GetModuleType(Module:Cardinal):Integer;
+     function GetModuleType(Module:Cardinal):string;
      function GetModuleName(module:Cardinal):string;
      function GetModuleFW(Module:Cardinal):string;
-     function ModuleTypeToStr(typ:Integer):string;
 
      // versions:
      function GetDllVersion():string;
@@ -333,6 +333,7 @@ procedure TRCSIFace.Reset();
   dllFuncIsModuleFailure := nil;
   dllFuncGetModuleCount := nil;
   dllFuncGetModuleType := nil;
+  dllFuncGetModuleTypeStr := nil;
   dllFuncGetModuleName := nil;
   dllFuncGetModuleFW := nil;
 
@@ -487,8 +488,14 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   if (not Assigned(dllFuncIsModuleFailure)) then unbound.Add('IsModuleFailure');
   dllFuncGetModuleCount := TDllFCardGeneral(GetProcAddress(dllHandle, 'GetModuleCount'));
   if (not Assigned(dllFuncGetModuleCount)) then unbound.Add('GetModuleCount');
-  dllFuncGetModuleType := TDllModuleIntGetter(GetProcAddress(dllHandle, 'GetModuleType'));
-  if (not Assigned(dllFuncGetModuleType)) then unbound.Add('GetModuleType');
+
+  dllFuncGetModuleTypeStr := TDllModuleStringGetter(GetProcAddress(dllHandle, 'GetModuleTypeStr'));
+  if (not Assigned(dllFuncGetModuleTypeStr)) then
+   begin
+    dllFuncGetModuleType := TDllModuleIntGetter(GetProcAddress(dllHandle, 'GetModuleType'));
+    if (not Assigned(dllFuncGetModuleType)) then unbound.Add('GetModuleTypeStr');
+   end;
+
   dllFuncGetModuleName := TDllModuleStringGetter(GetProcAddress(dllHandle, 'GetModuleName'));
   if (not Assigned(dllFuncGetModuleName)) then unbound.Add('GetModuleName');
   dllFuncGetModuleFW := TDllModuleStringGetter(GetProcAddress(dllHandle, 'GetModuleFW'));
@@ -877,15 +884,38 @@ function TRCSIFace.GetModuleCount():Cardinal;
     raise ERCSFuncNotAssigned.Create('FFuncGetModuleCount not assigned');
  end;
 
-function TRCSIFace.GetModuleType(Module:Cardinal):Integer;
+function TRCSIFace.GetModuleType(Module:Cardinal):string;
+const STR_LEN = 32;
+var str:string;
+    res:Integer;
  begin
-  if (not Assigned(dllFuncGetModuleType)) then
-    raise ERCSFuncNotAssigned.Create('FFuncGetModuleType not assigned');
+  if (not Assigned(dllFuncGetModuleTypeStr) and (not Assigned(dllFuncGetModuleType))) then
+    raise ERCSFuncNotAssigned.Create('FFuncGetModuleTypeStr not assigned');
 
-  Result := dllFuncGetModuleType(Module);
+  if (Assigned(dllFuncGetModuleTypeStr)) then
+   begin
+    SetLength(str, STR_LEN);
+    res := dllFuncGetModuleTypeStr(Module, @str[1], STR_LEN);
 
-  if (Result = RCS_MODULE_INVALID_ADDR) then
-    raise ERCSInvalidModuleAddr.Create('Invalid module address : '+IntToStr(Module)+'!');
+    if (res = RCS_MODULE_INVALID_ADDR) then
+      raise ERCSInvalidModuleAddr.Create('Invalid module address : '+IntToStr(Module)+'!');
+
+    Result := string(str);
+   end else begin
+    // Leep backward compatibility with libraries, which do not support
+    // GetModuleTypeStr function.
+
+    res := dllFuncGetModuleType(Module);
+
+    case (res) of
+      _RCS_MOD_MTB_UNI_ID: Result := 'MTB-UNI';
+      _RCS_MOD_MTB_UNIOUT_ID: Result := 'MTB-UNIo';
+      _RCS_MOD_MTB_TTL_ID: Result := 'MTB-TTL';
+      _RCS_MOD_MTB_TTLOUT_ID: Result := 'MTB-TTLo';
+
+      RCS_MODULE_INVALID_ADDR: raise ERCSInvalidModuleAddr.Create('Invalid module address : '+IntToStr(Module)+'!');
+    end;
+   end;
  end;
 
 function TRCSIFace.GetModuleName(Module:Cardinal):string;
@@ -957,22 +987,6 @@ var str:string;
   dllFuncGetVersion(@str[1], STR_LEN);
   Result := string(str);
  end;
-
-////////////////////////////////////////////////////////////////////////////////
-
-function TRCSIFace.ModuleTypeToStr(typ:Integer):string;
-begin
- case (typ) of
-  _RCS_MOD_MTB_POT_ID    : Result := 'MTB-POT';
-  _RCS_MOD_MTB_REGP_ID   : Result := 'MTB-REG';
-  _RCS_MOD_MTB_UNI_ID    : Result := 'MTB-UNI';
-  _RCS_MOD_MTB_UNIOUT_ID : Result := 'MTB-UNIo';
-  _RCS_MOD_MTB_TTL_ID    : Result := 'MTB-TTL';
-  _RCS_MOD_MTB_TTLOUT_ID : Result := 'MTB-TTLo'
- else
-  Result := 'Unknown';
- end;
-end;
 
 ////////////////////////////////////////////////////////////////////////////////
 
