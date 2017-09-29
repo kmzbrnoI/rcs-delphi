@@ -85,6 +85,7 @@ type
   TDllModuleSet = function(module, port:Cardinal; state:Integer):Integer; stdcall;
   TDllModuleBoolGetter = function(module:Cardinal):boolean; stdcall;
   TDllModuleIntGetter = function(module:Cardinal):Integer; stdcall;
+  TDllModuleCardGetter = function(module:Cardinal):Cardinal; stdcall;
   TDllModuleStringGetter = function(module:Cardinal; str:PChar; strMaxLen:Cardinal):Integer; stdcall;
 
   TDllDeviceSerialGetter = procedure(index:Integer; serial:PChar; serialLen:Cardinal); stdcall;
@@ -168,6 +169,8 @@ type
     dllFuncGetModuleTypeStr : TDllModuleStringGetter;
     dllFuncGetModuleName : TDllModuleStringGetter;
     dllFuncGetModuleFW : TDllModuleStringGetter;
+    dllFuncGetModuleInputsCount : TDllModuleCardGetter;
+    dllFuncGetModuleOutputsCount : TDllModuleCardGetter;
 
     // versions
     dllFuncGetDeviceVersion : TDllDeviceVersionGetter;
@@ -247,6 +250,8 @@ type
      function GetModuleType(Module:Cardinal):string;
      function GetModuleName(module:Cardinal):string;
      function GetModuleFW(Module:Cardinal):string;
+     function GetModuleInputsCount(Module:Cardinal):Cardinal;
+     function GetModuleOutputsCount(Module:Cardinal):Cardinal;
 
      // versions:
      function GetDllVersion():string;
@@ -500,6 +505,10 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   if (not Assigned(dllFuncGetModuleName)) then unbound.Add('GetModuleName');
   dllFuncGetModuleFW := TDllModuleStringGetter(GetProcAddress(dllHandle, 'GetModuleFW'));
   if (not Assigned(dllFuncGetModuleFW)) then unbound.Add('GetModuleFW');
+
+  // these 2 function are not neccesarry, so we do not check bindings
+  dllFuncGetModuleInputsCount := TDllModuleCardGetter(GetProcAddress(dllHandle, 'GetModuleInputsCount'));
+  dllFuncGetModuleOutputsCount := TDllModuleCardGetter(GetProcAddress(dllHandle, 'GetModuleOutputsCount'));
 
   // versions
   dllFuncGetDeviceVersion := TDllDeviceVersionGetter(GetProcAddress(dllHandle, 'GetDeviceVersion'));
@@ -952,6 +961,28 @@ var str:string;
     raise ERCSInvalidModuleAddr.Create('Invalid module adderess: '+IntToStr(Module)+'!')
   else if (res <> 0) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
+ end;
+
+function TRCSIFace.GetModuleInputsCount(Module:Cardinal):Cardinal;
+ begin
+  if (not Assigned(dllFuncGetModuleInputsCount)) then
+    Exit(16);
+
+  Result := dllFuncGetModuleInputsCount(Module);
+
+  if (Result = RCS_MODULE_INVALID_ADDR) then
+    raise ERCSInvalidModuleAddr.Create('Invalid module adderess: '+IntToStr(Module)+'!');
+ end;
+
+function TRCSIFace.GetModuleOutputsCount(Module:Cardinal):Cardinal;
+ begin
+  if (not Assigned(dllFuncGetModuleOutputsCount)) then
+    Exit(16);
+
+  Result := dllFuncGetModuleOutputsCount(Module);
+
+  if (Result = RCS_MODULE_INVALID_ADDR) then
+    raise ERCSInvalidModuleAddr.Create('Invalid module adderess: '+IntToStr(Module)+'!');
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
