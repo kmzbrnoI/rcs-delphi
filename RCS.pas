@@ -961,6 +961,8 @@ var str:string;
     raise ERCSInvalidModuleAddr.Create('Invalid module adderess: '+IntToStr(Module)+'!')
   else if (res <> 0) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
+
+  Result := string(str);
  end;
 
 function TRCSIFace.GetModuleInputsCount(Module:Cardinal):Cardinal;
