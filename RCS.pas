@@ -856,7 +856,7 @@ function TRCSIFace.GetOutput(module, port:Cardinal):Integer;
 
   if (Result = RCS_NOT_STARTED) then
     raise ERCSNotStarted.Create('Railroad Control System not started!')
-  else if (Result = RCS_PORT_INVALID_NUMBER) then
+  else if (Result = RCS_MODULE_INVALID_ADDR) then
     raise ERCSModuleNotAvailable.Create('Module '+IntToStr(module)+' not available on bus!')
   else if (Result = RCS_MODULE_FAILED) then
     raise ERCSModuleFailed.Create('Module '+IntToStr(module)+' failed!')
@@ -874,7 +874,9 @@ var res:Integer;
 
   res := dllFuncGetInputType(module, port);
 
-  if (res = RCS_PORT_INVALID_NUMBER) then
+  if (res = RCS_MODULE_INVALID_ADDR) then
+    raise ERCSModuleNotAvailable.Create('Module '+IntToStr(module)+' not available on bus!')
+  else if (res = RCS_PORT_INVALID_NUMBER) then
     raise ERCSInvalidModulePort.Create('Invalid port number!');
 
   Result := TRCSIPortType(res);
@@ -888,7 +890,9 @@ var res:Integer;
 
   res := dllFuncGetOutputType(module, port);
 
-  if (res = RCS_PORT_INVALID_NUMBER) then
+  if (res = RCS_MODULE_INVALID_ADDR) then
+    raise ERCSModuleNotAvailable.Create('Module '+IntToStr(module)+' not available on bus!')
+  else if (res = RCS_PORT_INVALID_NUMBER) then
     raise ERCSInvalidModulePort.Create('Invalid port number!');
 
   Result := TRCSOPortType(res);
