@@ -9,7 +9,7 @@
 {
    LICENSE:
 
-   Copyright 2017 Jan Horacek, Michal Petrilak
+   Copyright 2017-2018 Jan Horacek, Michal Petrilak
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -120,6 +120,18 @@ type
 
   ///////////////////////////////////////////////////////////////////////////
 
+  TRCSIPortType = (
+    iptPlain = 0,
+    iptIR = 1
+  );
+
+  TRCSOPortType = (
+    optPlain = 0,
+    optIR = 1
+  );
+
+  ///////////////////////////////////////////////////////////////////////////
+
   TRCSIFace = class
   private
     dllName: string;
@@ -156,6 +168,8 @@ type
     dllFuncGetOutput : TDllModuleGet;
     dllFuncSetOutput : TDllModuleSet;
     dllFuncSetInput : TDllModuleSet;
+    dllFuncGetInputType : TDllModuleGet;
+    dllFuncGetOutputType : TDllModuleGet;
 
     // devices
     dllFuncGetDeviceCount : TDllFGeneral;
@@ -234,10 +248,13 @@ type
      function Started():boolean;
 
      // I/O functions:
-     procedure SetOutput(module, port: Integer; state: Integer);
-     function GetInput(module, port: Integer): TRCSInputState;
-     procedure SetInput(module, port: Integer; State : Integer);
-     function GetOutput(module, port:Integer):Integer;
+     procedure SetOutput(module, port: Cardinal; state: Integer);
+     function GetInput(module, port: Cardinal): TRCSInputState;
+     procedure SetInput(module, port: Cardinal; State : Integer);
+     function GetOutput(module, port:Cardinal):Integer;
+
+     function GetInputType(module, port: Cardinal):TRCSIPortType;
+     function GetOutputType(module, port: Cardinal):TRCSOPortType;
 
      // MTB-USB board:
      function GetDeviceCount():Integer;
@@ -328,6 +345,8 @@ procedure TRCSIFace.Reset();
   dllFuncGetOutput := nil;
   dllFuncSetOutput := nil;
   dllFuncSetInput := nil;
+  dllFuncGetInputType := nil;
+  dllFuncGetOutputType := nil;
 
   // devices
   dllFuncGetDeviceCount := nil;
@@ -479,6 +498,11 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   if (not Assigned(dllFuncSetOutput)) then unbound.Add('SetOutput');
   dllFuncSetInput := TDllModuleSet(GetProcAddress(dllHandle, 'SetInput'));
   if (not Assigned(dllFuncSetInput)) then unbound.Add('SetInput');
+
+  dllFuncGetInputType := TDllModuleGet(GetProcAddress(dllHandle, 'GetInputType'));
+  if (not Assigned(dllFuncGetInputType)) then unbound.Add('GetInputType');
+  dllFuncGetOutputType := TDllModuleGet(GetProcAddress(dllHandle, 'GetOutputType'));
+  if (not Assigned(dllFuncGetOutputType)) then unbound.Add('GetOutputType');
 
   // devices
   dllFuncGetDeviceCount := TDllFGeneral(GetProcAddress(dllHandle, 'GetDeviceCount'));
@@ -765,7 +789,7 @@ end;
 ////////////////////////////////////////////////////////////////////////////////
 // module I/O:
 
-function TRCSIFace.GetInput(module, port: Integer):TRCSInputState;
+function TRCSIFace.GetInput(module, port: Cardinal):TRCSInputState;
 var tmp:Integer;
  begin
   if (not Assigned(dllFuncGetInput)) then
@@ -783,7 +807,7 @@ var tmp:Integer;
   Result := TRCSInputState(tmp);
  end;
 
-procedure TRCSIFace.SetOutput(module, port: Integer; state: Integer);
+procedure TRCSIFace.SetOutput(module, port: Cardinal; state: Integer);
 var res:Integer;
  begin
   if (not Assigned(dllFuncSetOutput)) then
@@ -805,7 +829,7 @@ var res:Integer;
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-procedure TRCSIFace.SetInput(module, port: Integer; state: Integer);
+procedure TRCSIFace.SetInput(module, port: Cardinal; state: Integer);
 var res:Integer;
  begin
   if (not Assigned(dllFuncSetInput)) then
@@ -823,7 +847,7 @@ var res:Integer;
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-function TRCSIFace.GetOutput(module, port:Integer):Integer;
+function TRCSIFace.GetOutput(module, port:Cardinal):Integer;
  begin
   if (not Assigned(dllFuncGetOutput)) then
     raise ERCSFuncNotAssigned.Create('FFuncGetOutput not assigned');
@@ -840,6 +864,34 @@ function TRCSIFace.GetOutput(module, port:Integer):Integer;
     raise ERCSInvalidModulePort.Create('Invalid port number!')
   else if (Result = RCS_GENERAL_EXCEPTION) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
+ end;
+
+function TRCSIFace.GetInputType(module, port: Cardinal):TRCSIPortType;
+var res:Integer;
+ begin
+  if (not Assigned(dllFuncGetInputType)) then
+    Exit(TRCSIPortType.iptPlain); // Backward compatibility
+
+  res := dllFuncGetInputType(module, port);
+
+  if (res = RCS_PORT_INVALID_NUMBER) then
+    raise ERCSInvalidModulePort.Create('Invalid port number!');
+
+  Result := TRCSIPortType(res);
+ end;
+
+function TRCSIFace.GetOutputType(module, port: Cardinal):TRCSOPortType;
+var res:Integer;
+ begin
+  if (not Assigned(dllFuncGetOutputType)) then
+    Exit(TRCSOPortType.optPlain); // Backward compatibility
+
+  res := dllFuncGetOutputType(module, port);
+
+  if (res = RCS_PORT_INVALID_NUMBER) then
+    raise ERCSInvalidModulePort.Create('Invalid port number!');
+
+  Result := TRCSOPortType(res);
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
