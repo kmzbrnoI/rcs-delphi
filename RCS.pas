@@ -119,10 +119,11 @@ type
   TRCSLogLevel = (
     llNo = 0,
     llErrors = 1,
-    llChangeOfState = 2,
+    llWarnings = 2,
     llCommands = 3,
-    llRawCommands = 4,
-    llDebug = 5
+    llData = 4,
+    llRawCommands = 5,
+    llDebug = 6
   );
 
   ///////////////////////////////////////////////////////////////////////////
