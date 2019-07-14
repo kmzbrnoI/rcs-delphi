@@ -79,6 +79,7 @@ type
   TDllFCardGeneral = function():Cardinal; stdcall;
 
   TDllFileIO = function(filename:PChar):Integer; stdcall;
+  TDllFileIOProc = procedure(filename:PChar); stdcall;
 
   TDllSetLogLevel = procedure(loglevel:Cardinal); stdcall;
   TDllGetLogLevel = function():Cardinal; stdcall;
@@ -150,6 +151,7 @@ type
     // config file load/save
     dllFuncLoadConfig: TDllFileIO;
     dllFuncSaveConfig: TDllFileIO;
+    dllFuncSetConfigFileName: TDllFileIOProc;
 
     // logging
     dllFuncSetLogLevel: TDllSetLogLevel;
@@ -229,7 +231,7 @@ type
      constructor Create();
      destructor Destroy(); override;
 
-     procedure LoadLib(path:string);
+     procedure LoadLib(path:string; configFn:string);
      procedure UnloadLib();
 
      ////////////////////////////////////////////////////////////////////
@@ -237,6 +239,7 @@ type
      // file I/O
      procedure LoadConfig(fn:string);
      procedure SaveConfig(fn:string);
+     procedure SetConfigFilaName(fn:string);
 
      // logging
      procedure SetLogLevel(loglevel:TRCSLogLevel);
@@ -452,7 +455,7 @@ procedure dllOnScanned(Sender: TObject; data:Pointer); stdcall;
 ////////////////////////////////////////////////////////////////////////////////
 // Load dll library
 
-procedure TRCSIFace.LoadLib(path:string);
+procedure TRCSIFace.LoadLib(path:string; configFn:string);
 var dllFuncStdNotifyBind: TDllStdNotifyBind;
     dllFuncOnErrorBind: TDllStdErrorBind;
     dllFuncOnLogBind: TDllStdLogBind;
@@ -494,6 +497,11 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   if (not Assigned(dllFuncLoadConfig)) then unbound.Add('LoadConfig');
   dllFuncSaveConfig := TDllFileIO(GetProcAddress(dllHandle, 'SaveConfig'));
   if (not Assigned(dllFuncSaveConfig)) then unbound.Add('SaveConfig');
+  dllFuncSetConfigFileName := TDllFileIOProc(GetProcAddress(dllHandle, 'SetConfigFileName'));
+  if (not Assigned(dllFuncSetConfigFileName)) then unbound.Add('SetConfigFileName');
+
+  if (Assigned(dllFuncLoadConfig)) then
+    dllFuncLoadConfig(PChar(configFn));
 
   // logging
   dllFuncSetLogLevel     := TDllSetLogLevel(GetProcAddress(dllHandle, 'SetLogLevel'));
@@ -677,6 +685,13 @@ var res:Integer;
   else if (res <> 0) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
+
+procedure TRCSIFace.SetConfigFilaName(fn:string);
+ begin
+  if (not Assigned(dllFuncSetConfigFileName)) then
+    raise ERCSFuncNotAssigned.Create('FFuncSetConfigFileName not assigned');
+  dllFuncSetConfigFileName(PChar(fn));
+end;
 
 ////////////////////////////////////////////////////////////////////////////////
 // logging
