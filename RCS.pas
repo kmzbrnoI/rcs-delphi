@@ -56,6 +56,16 @@ const
   );
 
 type
+  TRCSLogLevel = (
+    llNo = 0,
+    llErrors = 1,
+    llWarnings = 2,
+    llInfo = 3,
+    llCommands = 4,
+    llRawCommands = 5,
+    llDebug = 6
+  );
+
   ///////////////////////////////////////////////////////////////////////////
   // Events called from library to TRCSIFace:
 
@@ -67,7 +77,7 @@ type
   ///////////////////////////////////////////////////////////////////////////
   // Events called from TRCSIFace to parent:
 
-  TLogEvent = procedure (Sender: TObject; logLevel:Integer; msg:string) of object;
+  TLogEvent = procedure (Sender: TObject; logLevel:TRCSLogLevel; msg:string) of object;
   TErrorEvent = procedure (Sender: TObject; errValue: word; errAddr: Cardinal; errMsg:PChar) of object;
   TModuleChangeEvent = procedure (Sender: TObject; module: Cardinal) of object;
 
@@ -112,18 +122,6 @@ type
     failure = RCS_MODULE_FAILED,
     notYetScanned = RCS_INPUT_NOT_YET_SCANNED,
     unavailable = RCS_MODULE_INVALID_ADDR
-  );
-
-  ///////////////////////////////////////////////////////////////////////////
-
-  TRCSLogLevel = (
-    llNo = 0,
-    llErrors = 1,
-    llWarnings = 2,
-    llCommands = 3,
-    llData = 4,
-    llRawCommands = 5,
-    llDebug = 6
   );
 
   ///////////////////////////////////////////////////////////////////////////
@@ -245,6 +243,7 @@ type
      // logging
      procedure SetLogLevel(loglevel:TRCSLogLevel);
      function GetLogLevel():TRCSLogLevel;
+     class function LogLevelToString(ll:TRCSLogLevel):string;
 
      // dialogs
      procedure ShowConfigDialog();
@@ -436,7 +435,7 @@ procedure dllOnError(Sender: TObject; data:Pointer; errValue: word; errAddr: Car
 
 procedure dllOnLog(Sender: TObject; data:Pointer; logLevel:Integer; msg:PChar); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnLog)) then TRCSIFace(data).OnLog(TRCSIFace(data), logLevel, msg);
+  if (Assigned(TRCSIFace(data).OnLog)) then TRCSIFace(data).OnLog(TRCSIFace(data), TRCSLogLevel(logLevel), msg);
  end;
 
 procedure dllOnInputChanged(Sender: TObject; data:Pointer; module:Cardinal); stdcall;
@@ -711,6 +710,21 @@ function TRCSIFace.GetLogLevel():TRCSLogLevel;
   else
     Result := TRCSLogLevel(dllFuncGetLogLevel());
  end;
+
+class function TRCSIFace.LogLevelToString(ll:TRCSLogLevel):string;
+begin
+ case (ll) of
+   llNo: Result := 'No';
+   llErrors: Result := 'Err';
+   llWarnings: Result := 'Warn';
+   llInfo: Result := 'Info';
+   llCommands: Result := 'Cmd';
+   llRawCommands: Result := 'Raw';
+   llDebug: Result := 'Debug';
+ else
+   Result := '?';
+ end;
+end;
 
 ////////////////////////////////////////////////////////////////////////////////
 // dialogs:
