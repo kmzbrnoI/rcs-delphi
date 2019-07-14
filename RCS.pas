@@ -248,6 +248,7 @@ type
      // dialogs
      procedure ShowConfigDialog();
      procedure HideConfigDialog();
+     function HasDialog():boolean;
 
      // device open/close
      procedure Open();
@@ -511,9 +512,7 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
 
   // dialogs
   dllFuncShowConfigDialog := TDllPGeneral(GetProcAddress(dllHandle, 'ShowConfigDialog'));
-  if (not Assigned(dllFuncShowConfigDialog)) then unbound.Add('ShowConfigDialog');
   dllFuncHideConfigDialog := TDllPGeneral(GetProcAddress(dllHandle, 'HideConfigDialog'));
-  if (not Assigned(dllFuncHideConfigDialog)) then unbound.Add('HideConfigDialog');
 
   // open/close
   dllFuncOpen := TDllFGeneral(GetProcAddress(dllHandle, 'Open'));
@@ -730,6 +729,11 @@ procedure TRCSIFace.HideConfigDialog();
   else
     raise ERCSFuncNotAssigned.Create('FFuncHideConfigDialog not assigned');
  end;
+
+function TRCSIFace.HasDialog():boolean;
+begin
+ Result := Assigned(Self.dllFuncShowConfigDialog);
+end;
 
 ////////////////////////////////////////////////////////////////////////////////
 // open/close:
