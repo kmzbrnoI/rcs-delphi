@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // RCS.pas
 // Interface to Railroad Control System (e.g. MTB, simulator, possibly DCC).
-// (c) Jan Horacek, Michal Petrilak 2009-2017
+// (c) Jan Horacek, Michal Petrilak 2017-2019
 // jan.horacek@kmz-brno.cz, engineercz@gmail.com
 // license: Apache license v2.0
 ////////////////////////////////////////////////////////////////////////////////
@@ -9,7 +9,7 @@
 {
    LICENSE:
 
-   Copyright 2017-2018 Jan Horacek, Michal Petrilak
+   Copyright 2017-2019 Jan Horacek, Michal Petrilak
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -51,21 +51,25 @@ const
   _RCS_MOD_MTB_TTL_ID = $60;
   _RCS_MOD_MTB_TTLOUT_ID = $70;
 
+  _RCS_API_SUPPORTED_VERSIONS : array[0..0] of Cardinal = (
+    $0301 // v1.3
+  );
+
 type
   ///////////////////////////////////////////////////////////////////////////
   // Events called from library to TRCSIFace:
 
   TStdNotifyEvent = procedure (Sender: TObject; data:Pointer); stdcall;
   TStdLogEvent = procedure (Sender: TObject; data:Pointer; logLevel:Integer; msg:PChar); stdcall;
-  TStdErrorEvent = procedure (Sender: TObject; data:Pointer; errValue: word; errAddr: byte; errMsg:PChar); stdcall;
-  TStdModuleChangeEvent = procedure (Sender: TObject; data:Pointer; module: byte); stdcall;
+  TStdErrorEvent = procedure (Sender: TObject; data:Pointer; errValue: word; errAddr: Cardinal; errMsg:PChar); stdcall;
+  TStdModuleChangeEvent = procedure (Sender: TObject; data:Pointer; module: Cardinal); stdcall;
 
   ///////////////////////////////////////////////////////////////////////////
   // Events called from TRCSIFace to parent:
 
   TLogEvent = procedure (Sender: TObject; logLevel:Integer; msg:string) of object;
-  TErrorEvent = procedure (Sender: TObject; errValue: word; errAddr: byte; errMsg:PChar) of object;
-  TModuleChangeEvent = procedure (Sender: TObject; module: byte) of object;
+  TErrorEvent = procedure (Sender: TObject; errValue: word; errAddr: Cardinal; errMsg:PChar) of object;
+  TModuleChangeEvent = procedure (Sender: TObject; module: Cardinal) of object;
 
   ///////////////////////////////////////////////////////////////////////////
   // Prototypes of functions called to library:
@@ -90,6 +94,8 @@ type
 
   TDllDeviceSerialGetter = procedure(index:Integer; serial:PChar; serialLen:Cardinal); stdcall;
   TDllDeviceVersionGetter = function(version:PChar; versionMaxLen:Cardinal):Integer; stdcall;
+  TDllApiVersionAsker = function(version:Integer):Boolean; stdcall;
+  TDllApiVersionSetter = function(version:Integer):Integer; stdcall;
   TDllVersionGetter = procedure(version:PChar; versionMaxLen:Cardinal); stdcall;
 
   TDllStdNotifyBind = procedure(event:TStdNotifyEvent; data:Pointer); stdcall;
@@ -136,6 +142,7 @@ type
   private
     dllName: string;
     dllHandle: Cardinal;
+    mApiVersion: Cardinal;
 
     // ------------------------------------------------------------------
     // Functions called to library:
@@ -187,6 +194,8 @@ type
     dllFuncGetModuleOutputsCount : TDllModuleCardGetter;
 
     // versions
+    dllFuncApiSupportsVersion : TDllApiVersionAsker;
+    dllFuncApiSetVersion : TDllApiVersionSetter;
     dllFuncGetDeviceVersion : TDllDeviceVersionGetter;
     dllFuncGetVersion : TDllVersionGetter;
 
@@ -210,6 +219,7 @@ type
     eOnScanned : TNotifyEvent;
 
      procedure Reset();
+     procedure PickApiVersion();
 
   public
 
@@ -273,6 +283,7 @@ type
      // versions:
      function GetDllVersion():string;
      function GetDeviceVersion():string;
+     class function IsApiVersionSupport(version:Cardinal):Boolean;
 
      property BeforeOpen:TNotifyEvent read eBeforeOpen write eBeforeOpen;
      property AfterOpen:TNotifyEvent read eAfterOpen write eAfterOpen;
@@ -292,6 +303,7 @@ type
      property OnScanned:TNotifyEvent read eOnScanned write eOnScanned;
 
      property Lib: string read dllName;
+     property apiVersion: Cardinal read mApiVersion;
 
   end;
 
@@ -318,6 +330,8 @@ destructor TRCSIFace.Destroy();
 
 procedure TRCSIFace.Reset();
  begin
+  Self.mApiVersion := _RCS_API_SUPPORTED_VERSIONS[High(_RCS_API_SUPPORTED_VERSIONS)];
+
   dllFuncLoadConfig := nil;
   dllFuncSaveConfig := nil;
 
@@ -410,7 +424,7 @@ procedure dllAfterStop(Sender:TObject; data:Pointer); stdcall;
   if (Assigned(TRCSIFace(data).AfterStop)) then TRCSIFace(data).AfterStop(TRCSIFace(data));
  end;
 
-procedure dllOnError(Sender: TObject; data:Pointer; errValue: word; errAddr: byte; errMsg:PChar); stdcall;
+procedure dllOnError(Sender: TObject; data:Pointer; errValue: word; errAddr: Cardinal; errMsg:PChar); stdcall;
  begin
   if (Assigned(TRCSIFace(data).OnError)) then TRCSIFace(data).OnError(TRCSIFace(data), errValue, errAddr, errMsg);
  end;
@@ -420,12 +434,12 @@ procedure dllOnLog(Sender: TObject; data:Pointer; logLevel:Integer; msg:PChar); 
   if (Assigned(TRCSIFace(data).OnLog)) then TRCSIFace(data).OnLog(TRCSIFace(data), logLevel, msg);
  end;
 
-procedure dllOnInputChanged(Sender: TObject; data:Pointer; module:byte); stdcall;
+procedure dllOnInputChanged(Sender: TObject; data:Pointer; module:Cardinal); stdcall;
  begin
   if (Assigned(TRCSIFace(data).OnInputChanged)) then TRCSIFace(data).OnInputChanged(TRCSIFace(data), module);
  end;
 
-procedure dllOnOutputChanged(Sender: TObject; data:Pointer; module:byte); stdcall;
+procedure dllOnOutputChanged(Sender: TObject; data:Pointer; module:Cardinal); stdcall;
  begin
   if (Assigned(TRCSIFace(data).OnOutputChanged)) then TRCSIFace(data).OnOutputChanged(TRCSIFace(data), module);
  end;
@@ -452,6 +466,28 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   dllHandle := LoadLibrary(PChar(dllName));
   if (dllHandle = 0) then
     raise ERCSCannotLoadLib.Create('Cannot load library!');
+
+  // library API version
+  dllFuncApiSupportsVersion := TDllApiVersionAsker(GetProcAddress(dllHandle, 'ApiSupportsVersion'));
+  dllFuncApiSetVersion := TDllApiVersionSetter(GetProcAddress(dllHandle, 'ApiSetVersion'));
+  if ((not Assigned(dllFuncApiSupportsVersion)) or (not Assigned(dllFuncApiSetVersion))) then
+   begin
+    Self.mApiVersion := $0201; // default v1.2
+    if (not Self.IsApiVersionSupport(Self.mApiVersion)) then
+     begin
+      Self.UnloadLib();
+      raise ERCSUnsupportedApiVersion.Create('Unsupported library version: v1.2');
+     end;
+   end else begin
+    try
+      Self.PickApiVersion(); // will pick right version or raise exception
+    except
+      Self.UnloadLib();
+      raise;
+    end;
+   end;
+
+  // one of te supported versions picked here
 
   // config file load/save
   dllFuncLoadConfig := TDllFileIO(GetProcAddress(dllHandle, 'LoadConfig'));
@@ -599,7 +635,7 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
 procedure TRCSIFace.UnloadLib();
  begin
   if (Self.dllHandle = 0) then
-    raise ERCSNoLibLoaded.Create('No library laoded, cannot unload!');
+    raise ERCSNoLibLoaded.Create('No library loaded, cannot unload!');
 
   FreeLibrary(Self.dllHandle);
   Self.Reset();
@@ -1076,6 +1112,36 @@ var str:string;
   dllFuncGetVersion(@str[1], STR_LEN);
   Result := string(str);
  end;
+
+////////////////////////////////////////////////////////////////////////////////
+
+class function TRCSIFace.IsApiVersionSupport(version:Cardinal):Boolean;
+var i:Integer;
+begin
+ for i := Low(_RCS_API_SUPPORTED_VERSIONS) to High(_RCS_API_SUPPORTED_VERSIONS) do
+   if (_RCS_API_SUPPORTED_VERSIONS[i] = version) then
+     Exit(true);
+ Result := false;
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+
+procedure TRCSIFace.PickApiVersion();
+var i:Integer;
+begin
+ for i := High(_RCS_API_SUPPORTED_VERSIONS) downto Low(_RCS_API_SUPPORTED_VERSIONS) do
+  begin
+   if (Self.dllFuncApiSupportsVersion(_RCS_API_SUPPORTED_VERSIONS[i])) then
+    begin
+     Self.mApiVersion := _RCS_API_SUPPORTED_VERSIONS[i];
+     if (Self.dllFuncApiSetVersion(Self.mApiVersion) <> 0) then
+       raise ERCSCannotLoadLib.Create('ApiSetVersion returned nonzero result!');
+     Exit();
+    end;
+  end;
+
+ raise ERCSUnsupportedApiVersion.Create('Library does not support any of the supported versions');
+end;
 
 ////////////////////////////////////////////////////////////////////////////////
 

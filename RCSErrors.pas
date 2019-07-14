@@ -126,6 +126,7 @@ type
   ERCSLibNotFound = class(RCSException);
   ERCSCannotLoadLib = class(RCSException);
   ERCSNoLibLoaded = class(RCSException);
+  ERCSUnsupportedApiVersion = class(RCSException);
 
 implementation
 
