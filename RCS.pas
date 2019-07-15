@@ -187,6 +187,7 @@ type
     dllFuncIsModule : TDllModuleBoolGetter;
     dllFuncIsModuleFailure: TDllModuleBoolGetter;
     dllFuncGetModuleCount : TDllFCardGeneral;
+    dllFuncGetMaxModuleAddr : TDllFCardGeneral;
     dllFuncGetModuleType : TDllModuleIntGetter;
     dllFuncGetModuleTypeStr : TDllModuleStringGetter;
     dllFuncGetModuleName : TDllModuleStringGetter;
@@ -278,6 +279,7 @@ type
      function IsModule(Module:Cardinal):boolean;
      function IsModuleFailure(module:Cardinal):Boolean;
      function GetModuleCount():Cardinal;
+     function GetMaxModuleAddr():Cardinal;
      function GetModuleType(Module:Cardinal):string;
      function GetModuleName(module:Cardinal):string;
      function GetModuleFW(Module:Cardinal):string;
@@ -374,6 +376,7 @@ procedure TRCSIFace.Reset();
   dllFuncIsModule := nil;
   dllFuncIsModuleFailure := nil;
   dllFuncGetModuleCount := nil;
+  dllFuncGetMaxModuleAddr := nil;
   dllFuncGetModuleType := nil;
   dllFuncGetModuleTypeStr := nil;
   dllFuncGetModuleName := nil;
@@ -560,6 +563,8 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   if (not Assigned(dllFuncIsModuleFailure)) then unbound.Add('IsModuleFailure');
   dllFuncGetModuleCount := TDllFCardGeneral(GetProcAddress(dllHandle, 'GetModuleCount'));
   if (not Assigned(dllFuncGetModuleCount)) then unbound.Add('GetModuleCount');
+  dllFuncGetMaxModuleAddr := TDllFCardGeneral(GetProcAddress(dllHandle, 'GetMaxModuleAddr'));
+  if (not Assigned(dllFuncGetMaxModuleAddr)) then unbound.Add('GetMaxModuleAddr');
 
   dllFuncGetModuleTypeStr := TDllModuleStringGetter(GetProcAddress(dllHandle, 'GetModuleTypeStr'));
   if (not Assigned(dllFuncGetModuleTypeStr)) then
@@ -1017,6 +1022,14 @@ function TRCSIFace.GetModuleCount():Cardinal;
     Result := dllFuncGetModuleCount()
   else
     raise ERCSFuncNotAssigned.Create('FFuncGetModuleCount not assigned');
+ end;
+
+function TRCSIFace.GetMaxModuleAddr():Cardinal;
+ begin
+  if (Assigned(dllFuncGetMaxModuleAddr)) then
+    Result := dllFuncGetMaxModuleAddr()
+  else
+    raise ERCSFuncNotAssigned.Create('FFuncGetMaxModuleAddr not assigned');
  end;
 
 function TRCSIFace.GetModuleType(Module:Cardinal):string;
