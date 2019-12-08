@@ -504,9 +504,6 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   dllFuncSetConfigFileName := TDllFileIOProc(GetProcAddress(dllHandle, 'SetConfigFileName'));
   if (not Assigned(dllFuncSetConfigFileName)) then unbound.Add('SetConfigFileName');
 
-  if (Assigned(dllFuncLoadConfig)) then
-    dllFuncLoadConfig(PChar(configFn));
-
   // logging
   dllFuncSetLogLevel     := TDllSetLogLevel(GetProcAddress(dllHandle, 'SetLogLevel'));
   if (not Assigned(dllFuncSetLogLevel)) then unbound.Add('SetLogLevel');
@@ -642,6 +639,9 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindOnScanned'));
   if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllOnScanned, self)
   else unbound.Add('BindOnScanned');
+
+  if (Assigned(dllFuncLoadConfig)) then
+    Self.LoadConfig(configFn);
  end;
 
 procedure TRCSIFace.UnloadLib();
