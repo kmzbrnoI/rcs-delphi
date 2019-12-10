@@ -121,7 +121,8 @@ type
     isOn = 1,
     failure = RCS_MODULE_FAILED,
     notYetScanned = RCS_INPUT_NOT_YET_SCANNED,
-    unavailable = RCS_MODULE_INVALID_ADDR
+    unavailableModule = RCS_MODULE_INVALID_ADDR,
+    unavailablePort = RCS_PORT_INVALID_NUMBER
   );
 
   ///////////////////////////////////////////////////////////////////////////
@@ -874,8 +875,6 @@ var tmp:Integer;
 
   if (tmp = RCS_NOT_STARTED) then
     raise ERCSNotStarted.Create('Railroad Control System not started!')
-  else if (tmp = RCS_PORT_INVALID_NUMBER) then
-    raise ERCSInvalidModulePort.Create('Invalid port number!')
   else if (tmp = RCS_GENERAL_EXCEPTION) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
 
