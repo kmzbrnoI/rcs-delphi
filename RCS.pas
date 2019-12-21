@@ -202,6 +202,9 @@ type
     dllFuncGetDeviceVersion : TDllDeviceVersionGetter;
     dllFuncGetVersion : TDllVersionGetter;
 
+    // features
+    dllFuncIsSimulation : TDllBoolGetter;
+
     // ------------------------------------------------------------------
     // Events from TRCSIFace
 
@@ -223,6 +226,7 @@ type
 
      procedure Reset();
      procedure PickApiVersion();
+     function IsSimulation():boolean;
 
   public
 
@@ -311,6 +315,7 @@ type
 
      property Lib: string read dllName;
      property apiVersion: Cardinal read mApiVersion;
+     property simulation: Boolean read IsSimulation;
 
   end;
 
@@ -640,6 +645,10 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   dllFuncStdNotifyBind := TDllStdNotifyBind(GetProcAddress(dllHandle, 'BindOnScanned'));
   if (Assigned(dllFuncStdNotifyBind)) then dllFuncStdNotifyBind(@dllOnScanned, self)
   else unbound.Add('BindOnScanned');
+
+  // features
+
+  dllFuncIsSimulation := TDllBoolGetter(GetProcAddress(dllHandle, 'IsSimulation'));
 
   if (Assigned(dllFuncLoadConfig)) then
     Self.LoadConfig(configFn);
@@ -1187,6 +1196,16 @@ begin
   end;
 
  raise ERCSUnsupportedApiVersion.Create('Library does not support any of the supported versions');
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+
+function TRCSIFace.IsSimulation():boolean;
+begin
+ if (Assigned(Self.dllFuncIsSimulation)) then
+   Result := Self.dllFuncIsSimulation()
+ else
+   Result := false;
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
