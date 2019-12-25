@@ -391,6 +391,11 @@ procedure TRCSIFace.Reset();
   // versions
   dllFuncGetDeviceVersion := nil;
   dllFuncGetVersion := nil;
+  dllFuncApiSupportsVersion := nil;
+  dllFuncApiSetVersion := nil;
+
+  // simulation
+  dllFuncIsSimulation := nil;
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
