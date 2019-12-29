@@ -342,6 +342,7 @@ destructor TRCSIFace.Destroy();
 
 procedure TRCSIFace.Reset();
  begin
+  Self.dllHandle := 0;
   Self.mApiVersion := _RCS_API_SUPPORTED_VERSIONS[High(_RCS_API_SUPPORTED_VERSIONS)];
 
   dllFuncLoadConfig := nil;
