@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // RCS.pas
 // Interface to Railroad Control System (e.g. MTB, simulator, possibly DCC).
-// (c) Jan Horacek, Michal Petrilak 2017-2019
+// (c) Jan Horacek, Michal Petrilak 2017-2020
 // jan.horacek@kmz-brno.cz, engineercz@gmail.com
 // license: Apache license v2.0
 ////////////////////////////////////////////////////////////////////////////////
@@ -9,7 +9,7 @@
 {
    LICENSE:
 
-   Copyright 2017-2019 Jan Horacek, Michal Petrilak
+   Copyright 2017-2020 Jan Horacek, Michal Petrilak
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -1029,16 +1029,19 @@ function TRCSIFace.GetDeviceCount():Integer;
  end;
 
 function TRCSIFace.GetDeviceSerial(index:Integer):string;
-const STR_LEN = 64;
-var str:string;
+const STR_LEN: Integer = 64;
+var str: PWideChar;
  begin
-  SetLength(str, STR_LEN);
-
   if (not Assigned(dllFuncGetDeviceSerial)) then
     raise ERCSFuncNotAssigned.Create('FFuncGetDevicSerial not assigned');
 
-  dllFuncGetDeviceSerial(index, @str[1], STR_LEN);
-  Result := string(str);
+  GetMem(str, SizeOf(WideChar)*(STR_LEN+1));
+  try
+    dllFuncGetDeviceSerial(index, str, STR_LEN);
+    Result := string(str);
+  finally
+    FreeMem(str);
+  end;
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1077,22 +1080,26 @@ function TRCSIFace.GetMaxModuleAddr():Cardinal;
  end;
 
 function TRCSIFace.GetModuleType(Module:Cardinal):string;
-const STR_LEN = 32;
-var str:string;
-    res:Integer;
+const STR_LEN: Integer = 32;
+var str: PWideChar;
+    res: Integer;
  begin
   if (not Assigned(dllFuncGetModuleTypeStr) and (not Assigned(dllFuncGetModuleType))) then
     raise ERCSFuncNotAssigned.Create('FFuncGetModuleTypeStr not assigned');
 
   if (Assigned(dllFuncGetModuleTypeStr)) then
    begin
-    SetLength(str, STR_LEN);
-    res := dllFuncGetModuleTypeStr(Module, @str[1], STR_LEN);
+    GetMem(str, SizeOf(WideChar)*(STR_LEN+1));
+    try
+      res := dllFuncGetModuleTypeStr(Module, str, STR_LEN);
 
-    if (res = RCS_MODULE_INVALID_ADDR) then
-      raise ERCSInvalidModuleAddr.Create('Invalid module address : '+IntToStr(Module)+'!');
+      if (res = RCS_MODULE_INVALID_ADDR) then
+        raise ERCSInvalidModuleAddr.Create('Invalid module address : '+IntToStr(Module)+'!');
 
-    Result := string(str);
+      Result := string(str);
+    finally
+      FreeMem(str);
+    end;
    end else begin
     // Leep backward compatibility with libraries, which do not support
     // GetModuleTypeStr function.
@@ -1111,41 +1118,46 @@ var str:string;
  end;
 
 function TRCSIFace.GetModuleName(Module:Cardinal):string;
-const STR_LEN = 128;
-var str:string;
+const STR_LEN: Integer = 128;
+var str:PWideChar;
     res:Integer;
  begin
-  SetLength(str, STR_LEN);
+  GetMem(str, SizeOf(WideChar)*(STR_LEN+1));
+  try
+    if (not Assigned(dllFuncGetModuleName)) then
+      raise ERCSFuncNotAssigned.Create('FFuncGetModuleName not assigned');
 
-  if (not Assigned(dllFuncGetModuleName)) then
-    raise ERCSFuncNotAssigned.Create('FFuncGetModuleName not assigned');
+    res := dllFuncGetModuleName(Module, str, STR_LEN);
 
-  res := dllFuncGetModuleName(Module, @str[1], STR_LEN);
-
-  if (res = RCS_MODULE_INVALID_ADDR) then
-    raise ERCSInvalidModuleAddr.Create('Invalid module address : '+IntToStr(Module)+'!');
-
-  Result := string(str);
+    if (res = RCS_MODULE_INVALID_ADDR) then
+      raise ERCSInvalidModuleAddr.Create('Invalid module address : '+IntToStr(Module)+'!');
+    Result := string(str);
+  finally
+    FreeMem(str);
+  end;
  end;
 
 function TRCSIFace.GetModuleFW(Module:Cardinal):string;
-const STR_LEN = 16;
-var str:string;
-    res:Integer;
+const STR_LEN: Integer = 16;
+var str: PWideChar;
+    res: Integer;
  begin
-  SetLength(str, STR_LEN);
-
   if (not Assigned(dllFuncGetModuleFW)) then
     raise ERCSFuncNotAssigned.Create('FFuncGetModuleFirmware not assigned');
 
-  res := dllFuncGetModuleFW(Module, @str[1], STR_LEN);
+  GetMem(str, SizeOf(WideChar)*(STR_LEN+1));
+  try
+    res := dllFuncGetModuleFW(Module, str, STR_LEN);
 
-  if (res = RCS_MODULE_INVALID_ADDR) then
-    raise ERCSInvalidModuleAddr.Create('Invalid module adderess: '+IntToStr(Module)+'!')
-  else if (res <> 0) then
-    raise ERCSGeneralException.Create('General exception in RCS library!');
+    if (res = RCS_MODULE_INVALID_ADDR) then
+      raise ERCSInvalidModuleAddr.Create('Invalid module adderess: '+IntToStr(Module)+'!')
+    else if (res <> 0) then
+      raise ERCSGeneralException.Create('General exception in RCS library!');
 
-  Result := string(str);
+    Result := string(str);
+  finally
+    FreeMem(str);
+  end;
  end;
 
 function TRCSIFace.GetModuleInputsCount(Module:Cardinal):Cardinal;
@@ -1174,34 +1186,40 @@ function TRCSIFace.GetModuleOutputsCount(Module:Cardinal):Cardinal;
 // versions:
 
 function TRCSIFace.GetDeviceVersion():string;
-const STR_LEN = 32;
-var str:string;
-    res:Integer;
+const STR_LEN: Integer = 32;
+var str: PWideChar;
+    res: Integer;
  begin
-  SetLength(str, STR_LEN);
-
   if (not Assigned(dllFuncGetDeviceVersion)) then
     raise ERCSFuncNotAssigned.Create('FFuncGetLibVersion not assigned');
 
-  res := dllFuncGetDeviceVersion(@str[1], STR_LEN);
+  GetMem(str, SizeOf(WideChar)*(STR_LEN+1));
+  try
+    res := dllFuncGetDeviceVersion(str, STR_LEN);
 
-  if (res = RCS_DEVICE_DISCONNECTED) then
-    raise ERCSNotOpened.Create('Device not opened, cannot read version!');
+    if (res = RCS_DEVICE_DISCONNECTED) then
+      raise ERCSNotOpened.Create('Device not opened, cannot read version!');
 
-  Result := string(str);
+    Result := string(str);
+  finally
+    FreeMem(str);
+  end;
  end;
 
 function TRCSIFace.GetDllVersion():String;
-const STR_LEN = 32;
-var str:string;
+const STR_LEN: Integer = 32;
+var str: PWideChar;
  begin
-  SetLength(str, STR_LEN);
-
   if (not Assigned(dllFuncGetVersion)) then
     raise ERCSFuncNotAssigned.Create('FFuncGetDriverVersion not assigned');
 
-  dllFuncGetVersion(@str[1], STR_LEN);
-  Result := string(str);
+  GetMem(str, SizeOf(WideChar)*(STR_LEN+1));
+  try
+    dllFuncGetVersion(str, STR_LEN);
+    Result := string(str);
+  finally
+    FreeMem(str);
+  end;
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
