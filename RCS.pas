@@ -430,67 +430,119 @@ procedure TRCSIFace.Reset();
 
 procedure dllBeforeOpen(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).BeforeOpen)) then TRCSIFace(data).BeforeOpen(TRCSIFace(data));
+  try
+    if (Assigned(TRCSIFace(data).BeforeOpen)) then TRCSIFace(data).BeforeOpen(TRCSIFace(data));
+  except
+
+  end;
  end;
 
 procedure dllAfterOpen(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).AfterOpen)) then TRCSIFace(data).AfterOpen(TRCSIFace(data));
+  try
+    if (Assigned(TRCSIFace(data).AfterOpen)) then TRCSIFace(data).AfterOpen(TRCSIFace(data));
+  except
+
+  end;
  end;
 
 procedure dllBeforeClose(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).BeforeClose)) then TRCSIFace(data).BeforeClose(TRCSIFace(data));
+  try
+    if (Assigned(TRCSIFace(data).BeforeClose)) then TRCSIFace(data).BeforeClose(TRCSIFace(data));
+  except
+
+  end;
  end;
 
 procedure dllAfterClose(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).AfterClose)) then TRCSIFace(data).AfterClose(TRCSIFace(data));
+  try
+    if (Assigned(TRCSIFace(data).AfterClose)) then TRCSIFace(data).AfterClose(TRCSIFace(data));
+  except
+
+  end;
  end;
 
 procedure dllBeforeStart(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).BeforeStart)) then TRCSIFace(data).BeforeStart(TRCSIFace(data));
+  try
+    if (Assigned(TRCSIFace(data).BeforeStart)) then TRCSIFace(data).BeforeStart(TRCSIFace(data));
+  except
+
+  end;
  end;
 
 procedure dllAfterStart(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).AfterStart)) then TRCSIFace(data).AfterStart(TRCSIFace(data));
+  try
+    if (Assigned(TRCSIFace(data).AfterStart)) then TRCSIFace(data).AfterStart(TRCSIFace(data));
+  except
+
+  end;
  end;
 
 procedure dllBeforeStop(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).BeforeStop)) then TRCSIFace(data).BeforeStop(TRCSIFace(data));
+  try
+    if (Assigned(TRCSIFace(data).BeforeStop)) then TRCSIFace(data).BeforeStop(TRCSIFace(data));
+  except
+
+  end;
  end;
 
 procedure dllAfterStop(Sender:TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).AfterStop)) then TRCSIFace(data).AfterStop(TRCSIFace(data));
+  try
+    if (Assigned(TRCSIFace(data).AfterStop)) then TRCSIFace(data).AfterStop(TRCSIFace(data));
+  except
+
+  end;
  end;
 
 procedure dllOnError(Sender: TObject; data:Pointer; errValue: word; errAddr: Cardinal; errMsg:PChar); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnError)) then TRCSIFace(data).OnError(TRCSIFace(data), errValue, errAddr, errMsg);
+  try
+    if (Assigned(TRCSIFace(data).OnError)) then TRCSIFace(data).OnError(TRCSIFace(data), errValue, errAddr, errMsg);
+  except
+
+  end;
  end;
 
 procedure dllOnLog(Sender: TObject; data:Pointer; logLevel:Integer; msg:PChar); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnLog)) then TRCSIFace(data).OnLog(TRCSIFace(data), TRCSLogLevel(logLevel), msg);
+  try
+    if (Assigned(TRCSIFace(data).OnLog)) then TRCSIFace(data).OnLog(TRCSIFace(data), TRCSLogLevel(logLevel), msg);
+  except
+
+  end;
  end;
 
 procedure dllOnInputChanged(Sender: TObject; data:Pointer; module:Cardinal); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnInputChanged)) then TRCSIFace(data).OnInputChanged(TRCSIFace(data), module);
+  try
+    if (Assigned(TRCSIFace(data).OnInputChanged)) then TRCSIFace(data).OnInputChanged(TRCSIFace(data), module);
+  except
+
+  end;
  end;
 
 procedure dllOnOutputChanged(Sender: TObject; data:Pointer; module:Cardinal); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnOutputChanged)) then TRCSIFace(data).OnOutputChanged(TRCSIFace(data), module);
+  try
+    if (Assigned(TRCSIFace(data).OnOutputChanged)) then TRCSIFace(data).OnOutputChanged(TRCSIFace(data), module);
+  except
+
+  end;
  end;
 
 procedure dllOnScanned(Sender: TObject; data:Pointer); stdcall;
  begin
-  if (Assigned(TRCSIFace(data).OnScanned)) then TRCSIFace(data).OnScanned(TRCSIFace(data));
+  try
+    if (Assigned(TRCSIFace(data).OnScanned)) then TRCSIFace(data).OnScanned(TRCSIFace(data));
+  except
+
+  end;
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
