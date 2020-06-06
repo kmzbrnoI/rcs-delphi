@@ -1027,12 +1027,6 @@ function TRCSIFace.GetOutput(module, port:Cardinal):Integer;
 
   if (Result = RCS_NOT_STARTED) then
     raise ERCSNotStarted.Create('Railroad Control System not started!')
-  else if (Result = RCS_MODULE_INVALID_ADDR) then
-    raise ERCSModuleNotAvailable.Create('Module '+IntToStr(module)+' not available on bus!')
-  else if (Result = RCS_MODULE_FAILED) then
-    raise ERCSModuleFailed.Create('Module '+IntToStr(module)+' failed!')
-  else if (Result = RCS_PORT_INVALID_NUMBER) then
-    raise ERCSInvalidModulePort.Create('Invalid port number!')
   else if (Result = RCS_GENERAL_EXCEPTION) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;

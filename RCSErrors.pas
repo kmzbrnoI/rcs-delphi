@@ -38,6 +38,8 @@ interface
 uses SysUtils;
 
 const
+ RCS_ERRORS_START = 1000;
+
  RCS_GENERAL_EXCEPTION = 1000;
  RCS_FT_EXCEPTION = 1001;       // device is always closed when this exception happens
  RCS_FILE_CANNOT_ACCESS = 1010;
