@@ -283,6 +283,7 @@ type
      // modules:
      function IsModule(Module:Cardinal):boolean;
      function IsModuleFailure(module:Cardinal):Boolean;
+     function IsNonFailedModule(module:Cardinal):Boolean;
      function GetModuleCount():Cardinal;
      function GetMaxModuleAddr():Cardinal;
      function GetModuleType(Module:Cardinal):string;
@@ -1107,6 +1108,11 @@ function TRCSIFace.IsModuleFailure(module:Cardinal):Boolean;
     Result := dllFuncIsModuleFailure(Module)
   else
     raise ERCSFuncNotAssigned.Create('FFuncIsModuleFailure not assigned');
+ end;
+
+function TRCSIFace.IsNonFailedModule(module:Cardinal):Boolean;
+ begin
+  Result := ((Self.IsModule(module)) and (not Self.IsModuleFailure(module)));
  end;
 
 function TRCSIFace.GetModuleCount():Cardinal;
