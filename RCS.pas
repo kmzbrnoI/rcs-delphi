@@ -94,11 +94,11 @@ type
   TDllSetLogLevel = procedure(loglevel:Cardinal); stdcall;
   TDllGetLogLevel = function():Cardinal; stdcall;
 
-  TDllOpenDevice = function(device:PChar; persist:boolean):Integer; stdcall;
-  TDllBoolGetter = function():boolean; stdcall;
+  TDllOpenDevice = function(device:PChar; persist:Boolean):Integer; stdcall;
+  TDllBoolGetter = function():Boolean; stdcall;
   TDllModuleGet = function(module, port:Cardinal):Integer; stdcall;
   TDllModuleSet = function(module, port:Cardinal; state:Integer):Integer; stdcall;
-  TDllModuleBoolGetter = function(module:Cardinal):boolean; stdcall;
+  TDllModuleBoolGetter = function(module:Cardinal):Boolean; stdcall;
   TDllModuleIntGetter = function(module:Cardinal):Integer; stdcall;
   TDllModuleCardGetter = function(module:Cardinal):Cardinal; stdcall;
   TDllModuleStringGetter = function(module:Cardinal; str:PChar; strMaxLen:Cardinal):Integer; stdcall;
@@ -226,7 +226,7 @@ type
 
      procedure Reset();
      procedure PickApiVersion();
-     function IsSimulation():boolean;
+     function IsSimulation():Boolean;
 
   public
 
@@ -254,18 +254,18 @@ type
      // dialogs
      procedure ShowConfigDialog();
      procedure HideConfigDialog();
-     function HasDialog():boolean;
+     function HasDialog():Boolean;
 
      // device open/close
      procedure Open();
-     procedure OpenDevice(device:string; persist:boolean);
+     procedure OpenDevice(device:string; persist:Boolean);
      procedure Close();
-     function Opened():boolean;
+     function Opened():Boolean;
 
      // communication start/stop
      procedure Start();
      procedure Stop();
-     function Started():boolean;
+     function Started():Boolean;
 
      // I/O functions:
      procedure SetOutput(module, port: Cardinal; state: Integer);
@@ -281,7 +281,7 @@ type
      function GetDeviceSerial(index:Integer):string;
 
      // modules:
-     function IsModule(Module:Cardinal):boolean;
+     function IsModule(Module:Cardinal):Boolean;
      function IsModuleFailure(module:Cardinal):Boolean;
      function IsNonFailedModule(module:Cardinal):Boolean;
      function GetModuleCount():Cardinal;
@@ -849,7 +849,7 @@ procedure TRCSIFace.HideConfigDialog();
     raise ERCSFuncNotAssigned.Create('FFuncHideConfigDialog not assigned');
  end;
 
-function TRCSIFace.HasDialog():boolean;
+function TRCSIFace.HasDialog():Boolean;
 begin
  Result := Assigned(Self.dllFuncShowConfigDialog);
 end;
@@ -873,7 +873,7 @@ var res:Integer;
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-procedure TRCSIFace.OpenDevice(device:string; persist:boolean);
+procedure TRCSIFace.OpenDevice(device:string; persist:Boolean);
 var res:Integer;
  begin
   if (not Assigned(dllFuncOpenDevice)) then
@@ -905,7 +905,7 @@ var res:Integer;
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-function TRCSIFace.Opened():boolean;
+function TRCSIFace.Opened():Boolean;
  begin
   if (not Assigned(dllFuncOpened)) then
     raise ERCSFuncNotAssigned.Create('FFuncOpened not assigned')
@@ -952,7 +952,7 @@ begin
     raise ERCSGeneralException.Create('General exception in RCS library!');
 end;
 
-function TRCSIFace.Started():boolean;
+function TRCSIFace.Started():Boolean;
 begin
   if (not Assigned(dllFuncStarted)) then
     raise ERCSFuncNotAssigned.Create('FFuncStarted not assigned')
@@ -1094,7 +1094,7 @@ var str: PWideChar;
 ////////////////////////////////////////////////////////////////////////////////
 // modules:
 
-function TRCSIFace.IsModule(Module:Cardinal):boolean;
+function TRCSIFace.IsModule(Module:Cardinal):Boolean;
  begin
   if (Assigned(dllFuncIsModule)) then
     Result := dllFuncIsModule(Module)
@@ -1306,7 +1306,7 @@ end;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function TRCSIFace.IsSimulation():boolean;
+function TRCSIFace.IsSimulation():Boolean;
 begin
  if (Assigned(Self.dllFuncIsSimulation)) then
    Result := Self.dllFuncIsSimulation()
