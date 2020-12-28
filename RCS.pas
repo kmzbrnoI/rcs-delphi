@@ -69,50 +69,50 @@ type
   ///////////////////////////////////////////////////////////////////////////
   // Events called from library to TRCSIFace:
 
-  TStdNotifyEvent = procedure (Sender: TObject; data:Pointer); stdcall;
-  TStdLogEvent = procedure (Sender: TObject; data:Pointer; logLevel:Integer; msg:PChar); stdcall;
-  TStdErrorEvent = procedure (Sender: TObject; data:Pointer; errValue: word; errAddr: Cardinal; errMsg:PChar); stdcall;
-  TStdModuleChangeEvent = procedure (Sender: TObject; data:Pointer; module: Cardinal); stdcall;
+  TStdNotifyEvent = procedure (Sender: TObject; data: Pointer); stdcall;
+  TStdLogEvent = procedure (Sender: TObject; data: Pointer; logLevel: Integer; msg: PChar); stdcall;
+  TStdErrorEvent = procedure (Sender: TObject; data: Pointer; errValue: word; errAddr: Cardinal; errMsg: PChar); stdcall;
+  TStdModuleChangeEvent = procedure (Sender: TObject; data: Pointer; module: Cardinal); stdcall;
 
   ///////////////////////////////////////////////////////////////////////////
   // Events called from TRCSIFace to parent:
 
-  TLogEvent = procedure (Sender: TObject; logLevel:TRCSLogLevel; msg:string) of object;
-  TErrorEvent = procedure (Sender: TObject; errValue: word; errAddr: Cardinal; errMsg:PChar) of object;
+  TLogEvent = procedure (Sender: TObject; logLevel: TRCSLogLevel; msg: string) of object;
+  TErrorEvent = procedure (Sender: TObject; errValue: word; errAddr: Cardinal; errMsg: PChar) of object;
   TModuleChangeEvent = procedure (Sender: TObject; module: Cardinal) of object;
 
   ///////////////////////////////////////////////////////////////////////////
   // Prototypes of functions called to library:
 
   TDllPGeneral = procedure(); stdcall;
-  TDllFGeneral = function():Integer; stdcall;
-  TDllFCardGeneral = function():Cardinal; stdcall;
+  TDllFGeneral = function(): Integer; stdcall;
+  TDllFCardGeneral = function(): Cardinal; stdcall;
 
-  TDllFileIO = function(filename:PChar):Integer; stdcall;
-  TDllFileIOProc = procedure(filename:PChar); stdcall;
+  TDllFileIO = function(filename: PChar): Integer; stdcall;
+  TDllFileIOProc = procedure(filename: PChar); stdcall;
 
-  TDllSetLogLevel = procedure(loglevel:Cardinal); stdcall;
-  TDllGetLogLevel = function():Cardinal; stdcall;
+  TDllSetLogLevel = procedure(loglevel: Cardinal); stdcall;
+  TDllGetLogLevel = function(): Cardinal; stdcall;
 
-  TDllOpenDevice = function(device:PChar; persist:Boolean):Integer; stdcall;
-  TDllBoolGetter = function():Boolean; stdcall;
-  TDllModuleGet = function(module, port:Cardinal):Integer; stdcall;
-  TDllModuleSet = function(module, port:Cardinal; state:Integer):Integer; stdcall;
-  TDllModuleBoolGetter = function(module:Cardinal):Boolean; stdcall;
-  TDllModuleIntGetter = function(module:Cardinal):Integer; stdcall;
-  TDllModuleCardGetter = function(module:Cardinal):Cardinal; stdcall;
-  TDllModuleStringGetter = function(module:Cardinal; str:PChar; strMaxLen:Cardinal):Integer; stdcall;
+  TDllOpenDevice = function(device: PChar; persist: Boolean): Integer; stdcall;
+  TDllBoolGetter = function(): Boolean; stdcall;
+  TDllModuleGet = function(module, port: Cardinal): Integer; stdcall;
+  TDllModuleSet = function(module, port: Cardinal; state: Integer): Integer; stdcall;
+  TDllModuleBoolGetter = function(module: Cardinal): Boolean; stdcall;
+  TDllModuleIntGetter = function(module: Cardinal): Integer; stdcall;
+  TDllModuleCardGetter = function(module: Cardinal): Cardinal; stdcall;
+  TDllModuleStringGetter = function(module: Cardinal; str: PChar; strMaxLen: Cardinal): Integer; stdcall;
 
-  TDllDeviceSerialGetter = procedure(index:Integer; serial:PChar; serialLen:Cardinal); stdcall;
-  TDllDeviceVersionGetter = function(version:PChar; versionMaxLen:Cardinal):Integer; stdcall;
-  TDllApiVersionAsker = function(version:Integer):Boolean; stdcall;
-  TDllApiVersionSetter = function(version:Integer):Integer; stdcall;
-  TDllVersionGetter = procedure(version:PChar; versionMaxLen:Cardinal); stdcall;
+  TDllDeviceSerialGetter = procedure(index: Integer; serial: PChar; serialLen: Cardinal); stdcall;
+  TDllDeviceVersionGetter = function(version: PChar; versionMaxLen: Cardinal): Integer; stdcall;
+  TDllApiVersionAsker = function(version: Integer): Boolean; stdcall;
+  TDllApiVersionSetter = function(version: Integer): Integer; stdcall;
+  TDllVersionGetter = procedure(version: PChar; versionMaxLen: Cardinal); stdcall;
 
-  TDllStdNotifyBind = procedure(event:TStdNotifyEvent; data:Pointer); stdcall;
-  TDllStdLogBind = procedure(event:TStdLogEvent; data:Pointer); stdcall;
-  TDllStdErrorBind = procedure(event:TStdErrorEvent; data:Pointer); stdcall;
-  TDllStdModuleChangeBind = procedure(event:TStdModuleChangeEvent; data:Pointer); stdcall;
+  TDllStdNotifyBind = procedure(event: TStdNotifyEvent; data: Pointer); stdcall;
+  TDllStdLogBind = procedure(event: TStdLogEvent; data: Pointer); stdcall;
+  TDllStdErrorBind = procedure(event: TStdErrorEvent; data: Pointer); stdcall;
+  TDllStdModuleChangeBind = procedure(event: TStdModuleChangeEvent; data: Pointer); stdcall;
 
   ///////////////////////////////////////////////////////////////////////////
 
@@ -226,7 +226,7 @@ type
 
      procedure Reset();
      procedure PickApiVersion();
-     function IsSimulation():Boolean;
+     function IsSimulation(): Boolean;
 
   public
 
@@ -236,83 +236,83 @@ type
      constructor Create();
      destructor Destroy(); override;
 
-     procedure LoadLib(path:string; configFn:string);
+     procedure LoadLib(path: string; configFn: string);
      procedure UnloadLib();
 
      ////////////////////////////////////////////////////////////////////
 
      // file I/O
-     procedure LoadConfig(fn:string);
-     procedure SaveConfig(fn:string);
-     procedure SetConfigFilaName(fn:string);
+     procedure LoadConfig(fn: string);
+     procedure SaveConfig(fn: string);
+     procedure SetConfigFilaName(fn: string);
 
      // logging
-     procedure SetLogLevel(loglevel:TRCSLogLevel);
-     function GetLogLevel():TRCSLogLevel;
-     class function LogLevelToString(ll:TRCSLogLevel):string;
+     procedure SetLogLevel(loglevel: TRCSLogLevel);
+     function GetLogLevel(): TRCSLogLevel;
+     class function LogLevelToString(ll: TRCSLogLevel): string;
 
      // dialogs
      procedure ShowConfigDialog();
      procedure HideConfigDialog();
-     function HasDialog():Boolean;
+     function HasDialog(): Boolean;
 
      // device open/close
      procedure Open();
-     procedure OpenDevice(device:string; persist:Boolean);
+     procedure OpenDevice(device: string; persist: Boolean);
      procedure Close();
-     function Opened():Boolean;
+     function Opened(): Boolean;
 
      // communication start/stop
      procedure Start();
      procedure Stop();
-     function Started():Boolean;
+     function Started(): Boolean;
 
      // I/O functions:
      procedure SetOutput(module, port: Cardinal; state: Integer);
      function GetInput(module, port: Cardinal): TRCSInputState;
      procedure SetInput(module, port: Cardinal; State : Integer);
-     function GetOutput(module, port:Cardinal):Integer;
+     function GetOutput(module, port: Cardinal): Integer;
 
-     function GetInputType(module, port: Cardinal):TRCSIPortType;
-     function GetOutputType(module, port: Cardinal):TRCSOPortType;
+     function GetInputType(module, port: Cardinal): TRCSIPortType;
+     function GetOutputType(module, port: Cardinal): TRCSOPortType;
 
      // MTB-USB board:
-     function GetDeviceCount():Integer;
-     function GetDeviceSerial(index:Integer):string;
+     function GetDeviceCount(): Integer;
+     function GetDeviceSerial(index: Integer): string;
 
      // modules:
-     function IsModule(Module:Cardinal):Boolean;
-     function IsModuleFailure(module:Cardinal):Boolean;
-     function IsNonFailedModule(module:Cardinal):Boolean;
-     function GetModuleCount():Cardinal;
-     function GetMaxModuleAddr():Cardinal;
-     function GetModuleType(Module:Cardinal):string;
-     function GetModuleName(module:Cardinal):string;
-     function GetModuleFW(Module:Cardinal):string;
-     function GetModuleInputsCount(Module:Cardinal):Cardinal;
-     function GetModuleOutputsCount(Module:Cardinal):Cardinal;
+     function IsModule(Module: Cardinal): Boolean;
+     function IsModuleFailure(module: Cardinal): Boolean;
+     function IsNonFailedModule(module: Cardinal): Boolean;
+     function GetModuleCount(): Cardinal;
+     function GetMaxModuleAddr(): Cardinal;
+     function GetModuleType(Module: Cardinal): string;
+     function GetModuleName(module: Cardinal): string;
+     function GetModuleFW(Module: Cardinal): string;
+     function GetModuleInputsCount(Module: Cardinal): Cardinal;
+     function GetModuleOutputsCount(Module: Cardinal): Cardinal;
 
      // versions:
-     function GetDllVersion():string;
-     function GetDeviceVersion():string;
-     class function IsApiVersionSupport(version:Cardinal):Boolean;
+     function GetDllVersion(): string;
+     function GetDeviceVersion(): string;
+     class function IsApiVersionSupport(version: Cardinal): Boolean;
 
-     property BeforeOpen:TNotifyEvent read eBeforeOpen write eBeforeOpen;
-     property AfterOpen:TNotifyEvent read eAfterOpen write eAfterOpen;
-     property BeforeClose:TNotifyEvent read eBeforeClose write eBeforeClose;
-     property AfterClose:TNotifyEvent read eAfterClose write eAfterClose;
+     property BeforeOpen: TNotifyEvent read eBeforeOpen write eBeforeOpen;
+     property AfterOpen: TNotifyEvent read eAfterOpen write eAfterOpen;
+     property BeforeClose: TNotifyEvent read eBeforeClose write eBeforeClose;
+     property AfterClose: TNotifyEvent read eAfterClose write eAfterClose;
 
-     property BeforeStart:TNotifyEvent read eBeforeStart write eBeforeStart;
-     property AfterStart:TNotifyEvent read eAfterStart write eAfterStart;
-     property BeforeStop:TNotifyEvent read eBeforeStop write eBeforeStop;
-     property AfterStop:TNotifyEvent read eAfterStop write eAfterStop;
+     property BeforeStart: TNotifyEvent read eBeforeStart write eBeforeStart;
+     property AfterStart: TNotifyEvent read eAfterStart write eAfterStart;
+     property BeforeStop: TNotifyEvent read eBeforeStop write eBeforeStop;
+     property AfterStop: TNotifyEvent read eAfterStop write eAfterStop;
 
-     property OnError:TErrorEvent read eOnError write eOnError;
-     property OnLog:TLogEvent read eOnLog write eOnLog;
-     property OnInputChanged:TModuleChangeEvent read eOnInputChange write eOnInputChange;
-     property OnOutputChanged:TModuleChangeEvent read eOnOutputChange write eOnOutputChange;
+     property OnError: TErrorEvent read eOnError write eOnError;
+     property OnLog: TLogEvent read eOnLog write eOnLog;
+     property OnInputChanged: TModuleChangeEvent read eOnInputChange write eOnInputChange;
+     property OnOutputChanged: TModuleChangeEvent read eOnOutputChange write eOnOutputChange;
 
-     property OnScanned:TNotifyEvent read eOnScanned write eOnScanned;
+     property OnScanned: TNotifyEvent read eOnScanned write eOnScanned;
 
      property Lib: string read dllName;
      property apiVersion: Cardinal read mApiVersion;
@@ -429,7 +429,7 @@ procedure TRCSIFace.Reset();
 // Events from dll library, these evetns must be declared as functions
 // (not as functions of objects)
 
-procedure dllBeforeOpen(Sender:TObject; data:Pointer); stdcall;
+procedure dllBeforeOpen(Sender: TObject; data: Pointer); stdcall;
  begin
   try
     if (Assigned(TRCSIFace(data).BeforeOpen)) then TRCSIFace(data).BeforeOpen(TRCSIFace(data));
@@ -438,7 +438,7 @@ procedure dllBeforeOpen(Sender:TObject; data:Pointer); stdcall;
   end;
  end;
 
-procedure dllAfterOpen(Sender:TObject; data:Pointer); stdcall;
+procedure dllAfterOpen(Sender: TObject; data: Pointer); stdcall;
  begin
   try
     if (Assigned(TRCSIFace(data).AfterOpen)) then TRCSIFace(data).AfterOpen(TRCSIFace(data));
@@ -447,7 +447,7 @@ procedure dllAfterOpen(Sender:TObject; data:Pointer); stdcall;
   end;
  end;
 
-procedure dllBeforeClose(Sender:TObject; data:Pointer); stdcall;
+procedure dllBeforeClose(Sender: TObject; data: Pointer); stdcall;
  begin
   try
     if (Assigned(TRCSIFace(data).BeforeClose)) then TRCSIFace(data).BeforeClose(TRCSIFace(data));
@@ -456,7 +456,7 @@ procedure dllBeforeClose(Sender:TObject; data:Pointer); stdcall;
   end;
  end;
 
-procedure dllAfterClose(Sender:TObject; data:Pointer); stdcall;
+procedure dllAfterClose(Sender: TObject; data: Pointer); stdcall;
  begin
   try
     if (Assigned(TRCSIFace(data).AfterClose)) then TRCSIFace(data).AfterClose(TRCSIFace(data));
@@ -465,7 +465,7 @@ procedure dllAfterClose(Sender:TObject; data:Pointer); stdcall;
   end;
  end;
 
-procedure dllBeforeStart(Sender:TObject; data:Pointer); stdcall;
+procedure dllBeforeStart(Sender: TObject; data: Pointer); stdcall;
  begin
   try
     if (Assigned(TRCSIFace(data).BeforeStart)) then TRCSIFace(data).BeforeStart(TRCSIFace(data));
@@ -474,7 +474,7 @@ procedure dllBeforeStart(Sender:TObject; data:Pointer); stdcall;
   end;
  end;
 
-procedure dllAfterStart(Sender:TObject; data:Pointer); stdcall;
+procedure dllAfterStart(Sender: TObject; data: Pointer); stdcall;
  begin
   try
     if (Assigned(TRCSIFace(data).AfterStart)) then TRCSIFace(data).AfterStart(TRCSIFace(data));
@@ -483,7 +483,7 @@ procedure dllAfterStart(Sender:TObject; data:Pointer); stdcall;
   end;
  end;
 
-procedure dllBeforeStop(Sender:TObject; data:Pointer); stdcall;
+procedure dllBeforeStop(Sender: TObject; data: Pointer); stdcall;
  begin
   try
     if (Assigned(TRCSIFace(data).BeforeStop)) then TRCSIFace(data).BeforeStop(TRCSIFace(data));
@@ -492,7 +492,7 @@ procedure dllBeforeStop(Sender:TObject; data:Pointer); stdcall;
   end;
  end;
 
-procedure dllAfterStop(Sender:TObject; data:Pointer); stdcall;
+procedure dllAfterStop(Sender: TObject; data: Pointer); stdcall;
  begin
   try
     if (Assigned(TRCSIFace(data).AfterStop)) then TRCSIFace(data).AfterStop(TRCSIFace(data));
@@ -501,7 +501,7 @@ procedure dllAfterStop(Sender:TObject; data:Pointer); stdcall;
   end;
  end;
 
-procedure dllOnError(Sender: TObject; data:Pointer; errValue: word; errAddr: Cardinal; errMsg:PChar); stdcall;
+procedure dllOnError(Sender: TObject; data: Pointer; errValue: word; errAddr: Cardinal; errMsg: PChar); stdcall;
  begin
   try
     if (Assigned(TRCSIFace(data).OnError)) then TRCSIFace(data).OnError(TRCSIFace(data), errValue, errAddr, errMsg);
@@ -510,7 +510,7 @@ procedure dllOnError(Sender: TObject; data:Pointer; errValue: word; errAddr: Car
   end;
  end;
 
-procedure dllOnLog(Sender: TObject; data:Pointer; logLevel:Integer; msg:PChar); stdcall;
+procedure dllOnLog(Sender: TObject; data: Pointer; logLevel: Integer; msg: PChar); stdcall;
  begin
   try
     if (Assigned(TRCSIFace(data).OnLog)) then TRCSIFace(data).OnLog(TRCSIFace(data), TRCSLogLevel(logLevel), msg);
@@ -519,7 +519,7 @@ procedure dllOnLog(Sender: TObject; data:Pointer; logLevel:Integer; msg:PChar); 
   end;
  end;
 
-procedure dllOnInputChanged(Sender: TObject; data:Pointer; module:Cardinal); stdcall;
+procedure dllOnInputChanged(Sender: TObject; data: Pointer; module: Cardinal); stdcall;
  begin
   try
     if (Assigned(TRCSIFace(data).OnInputChanged)) then TRCSIFace(data).OnInputChanged(TRCSIFace(data), module);
@@ -528,7 +528,7 @@ procedure dllOnInputChanged(Sender: TObject; data:Pointer; module:Cardinal); std
   end;
  end;
 
-procedure dllOnOutputChanged(Sender: TObject; data:Pointer; module:Cardinal); stdcall;
+procedure dllOnOutputChanged(Sender: TObject; data: Pointer; module: Cardinal); stdcall;
  begin
   try
     if (Assigned(TRCSIFace(data).OnOutputChanged)) then TRCSIFace(data).OnOutputChanged(TRCSIFace(data), module);
@@ -537,7 +537,7 @@ procedure dllOnOutputChanged(Sender: TObject; data:Pointer; module:Cardinal); st
   end;
  end;
 
-procedure dllOnScanned(Sender: TObject; data:Pointer); stdcall;
+procedure dllOnScanned(Sender: TObject; data: Pointer); stdcall;
  begin
   try
     if (Assigned(TRCSIFace(data).OnScanned)) then TRCSIFace(data).OnScanned(TRCSIFace(data));
@@ -549,7 +549,7 @@ procedure dllOnScanned(Sender: TObject; data:Pointer); stdcall;
 ////////////////////////////////////////////////////////////////////////////////
 // Load dll library
 
-procedure TRCSIFace.LoadLib(path:string; configFn:string);
+procedure TRCSIFace.LoadLib(path: string; configFn: string);
 var dllFuncStdNotifyBind: TDllStdNotifyBind;
     dllFuncOnErrorBind: TDllStdErrorBind;
     dllFuncOnLogBind: TDllStdLogBind;
@@ -759,8 +759,8 @@ procedure TRCSIFace.UnloadLib();
 ////////////////////////////////////////////////////////////////////////////////
 // file I/O
 
-procedure TRCSIFace.LoadConfig(fn:string);
-var res:Integer;
+procedure TRCSIFace.LoadConfig(fn: string);
+var res: Integer;
  begin
   if (not Assigned(dllFuncLoadConfig)) then
     raise ERCSFuncNotAssigned.Create('FFuncLoadConfig not assigned');
@@ -775,8 +775,8 @@ var res:Integer;
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-procedure TRCSIFace.SaveConfig(fn:string);
-var res:Integer;
+procedure TRCSIFace.SaveConfig(fn: string);
+var res: Integer;
  begin
   if (not Assigned(dllFuncSaveConfig)) then
     raise ERCSFuncNotAssigned.Create('FFuncSaveConfig not assigned');
@@ -789,7 +789,7 @@ var res:Integer;
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-procedure TRCSIFace.SetConfigFilaName(fn:string);
+procedure TRCSIFace.SetConfigFilaName(fn: string);
  begin
   if (not Assigned(dllFuncSetConfigFileName)) then
     raise ERCSFuncNotAssigned.Create('FFuncSetConfigFileName not assigned');
@@ -799,7 +799,7 @@ end;
 ////////////////////////////////////////////////////////////////////////////////
 // logging
 
-procedure TRCSIFace.SetLogLevel(loglevel:TRCSLogLevel);
+procedure TRCSIFace.SetLogLevel(loglevel: TRCSLogLevel);
  begin
   if (not Assigned(dllFuncSetLogLevel)) then
     raise ERCSFuncNotAssigned.Create('FFuncSetLogLevel not assigned')
@@ -807,7 +807,7 @@ procedure TRCSIFace.SetLogLevel(loglevel:TRCSLogLevel);
     dllFuncSetLogLevel(Cardinal(loglevel));
  end;
 
-function TRCSIFace.GetLogLevel():TRCSLogLevel;
+function TRCSIFace.GetLogLevel(): TRCSLogLevel;
  begin
   if (not Assigned(dllFuncGetLogLevel)) then
     raise ERCSFuncNotAssigned.Create('FFuncGetLogLevel not assigned')
@@ -815,7 +815,7 @@ function TRCSIFace.GetLogLevel():TRCSLogLevel;
     Result := TRCSLogLevel(dllFuncGetLogLevel());
  end;
 
-class function TRCSIFace.LogLevelToString(ll:TRCSLogLevel):string;
+class function TRCSIFace.LogLevelToString(ll: TRCSLogLevel): string;
 begin
  case (ll) of
    llNo: Result := 'No';
@@ -849,7 +849,7 @@ procedure TRCSIFace.HideConfigDialog();
     raise ERCSFuncNotAssigned.Create('FFuncHideConfigDialog not assigned');
  end;
 
-function TRCSIFace.HasDialog():Boolean;
+function TRCSIFace.HasDialog(): Boolean;
 begin
  Result := Assigned(Self.dllFuncShowConfigDialog);
 end;
@@ -858,7 +858,7 @@ end;
 // open/close:
 
 procedure TRCSIFace.Open();
-var res:Integer;
+var res: Integer;
  begin
   if (not Assigned(dllFuncOpen)) then
     raise ERCSFuncNotAssigned.Create('FFuncOpen not assigned');
@@ -873,8 +873,8 @@ var res:Integer;
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-procedure TRCSIFace.OpenDevice(device:string; persist:Boolean);
-var res:Integer;
+procedure TRCSIFace.OpenDevice(device: string; persist: Boolean);
+var res: Integer;
  begin
   if (not Assigned(dllFuncOpenDevice)) then
     raise ERCSFuncNotAssigned.Create('FFuncOpenDevice not assigned');
@@ -890,7 +890,7 @@ var res:Integer;
 end;
 
 procedure TRCSIFace.Close();
-var res:Integer;
+var res: Integer;
  begin
   if (not Assigned(dllFuncClose)) then
     raise ERCSFuncNotAssigned.Create('FFuncClose not assigned');
@@ -905,7 +905,7 @@ var res:Integer;
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-function TRCSIFace.Opened():Boolean;
+function TRCSIFace.Opened(): Boolean;
  begin
   if (not Assigned(dllFuncOpened)) then
     raise ERCSFuncNotAssigned.Create('FFuncOpened not assigned')
@@ -917,7 +917,7 @@ function TRCSIFace.Opened():Boolean;
 // start/stop:
 
 procedure TRCSIFace.Start();
-var res:Integer;
+var res: Integer;
 begin
   if (not Assigned(dllFuncStart)) then
     raise ERCSFuncNotAssigned.Create('FFuncStart not assigned');
@@ -939,7 +939,7 @@ begin
 end;
 
 procedure TRCSIFace.Stop();
-var res:Integer;
+var res: Integer;
 begin
   if (not Assigned(dllFuncStop)) then
     raise ERCSFuncNotAssigned.Create('FFuncStop not assigned');
@@ -952,7 +952,7 @@ begin
     raise ERCSGeneralException.Create('General exception in RCS library!');
 end;
 
-function TRCSIFace.Started():Boolean;
+function TRCSIFace.Started(): Boolean;
 begin
   if (not Assigned(dllFuncStarted)) then
     raise ERCSFuncNotAssigned.Create('FFuncStarted not assigned')
@@ -963,8 +963,8 @@ end;
 ////////////////////////////////////////////////////////////////////////////////
 // module I/O:
 
-function TRCSIFace.GetInput(module, port: Cardinal):TRCSInputState;
-var tmp:Integer;
+function TRCSIFace.GetInput(module, port: Cardinal): TRCSInputState;
+var tmp: Integer;
  begin
   if (not Assigned(dllFuncGetInput)) then
     raise ERCSFuncNotAssigned.Create('FFuncGetInput not assigned');
@@ -980,7 +980,7 @@ var tmp:Integer;
  end;
 
 procedure TRCSIFace.SetOutput(module, port: Cardinal; state: Integer);
-var res:Integer;
+var res: Integer;
  begin
   if (not Assigned(dllFuncSetOutput)) then
     raise ERCSFuncNotAssigned.Create('FFuncSetOutput not assigned');
@@ -1002,7 +1002,7 @@ var res:Integer;
  end;
 
 procedure TRCSIFace.SetInput(module, port: Cardinal; state: Integer);
-var res:Integer;
+var res: Integer;
  begin
   if (not Assigned(dllFuncSetInput)) then
     raise ERCSFuncNotAssigned.Create('FFuncSetInput not assigned');
@@ -1019,7 +1019,7 @@ var res:Integer;
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-function TRCSIFace.GetOutput(module, port:Cardinal):Integer;
+function TRCSIFace.GetOutput(module, port: Cardinal): Integer;
  begin
   if (not Assigned(dllFuncGetOutput)) then
     raise ERCSFuncNotAssigned.Create('FFuncGetOutput not assigned');
@@ -1032,8 +1032,8 @@ function TRCSIFace.GetOutput(module, port:Cardinal):Integer;
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-function TRCSIFace.GetInputType(module, port: Cardinal):TRCSIPortType;
-var res:Integer;
+function TRCSIFace.GetInputType(module, port: Cardinal): TRCSIPortType;
+var res: Integer;
  begin
   if (not Assigned(dllFuncGetInputType)) then
     Exit(TRCSIPortType.iptPlain); // Backward compatibility
@@ -1048,8 +1048,8 @@ var res:Integer;
   Result := TRCSIPortType(res);
  end;
 
-function TRCSIFace.GetOutputType(module, port: Cardinal):TRCSOPortType;
-var res:Integer;
+function TRCSIFace.GetOutputType(module, port: Cardinal): TRCSOPortType;
+var res: Integer;
  begin
   if (not Assigned(dllFuncGetOutputType)) then
     Exit(TRCSOPortType.optPlain); // Backward compatibility
@@ -1067,7 +1067,7 @@ var res:Integer;
 ////////////////////////////////////////////////////////////////////////////////
 // MTB-USB board:
 
-function TRCSIFace.GetDeviceCount():Integer;
+function TRCSIFace.GetDeviceCount(): Integer;
  begin
   if (Assigned(dllFuncGetDeviceCount)) then
     Result := dllFuncGetDeviceCount()
@@ -1075,7 +1075,7 @@ function TRCSIFace.GetDeviceCount():Integer;
     raise ERCSFuncNotAssigned.Create('FFuncGetDeviceCount not assigned');
  end;
 
-function TRCSIFace.GetDeviceSerial(index:Integer):string;
+function TRCSIFace.GetDeviceSerial(index: Integer): string;
 const STR_LEN: Integer = 64;
 var str: PWideChar;
  begin
@@ -1094,7 +1094,7 @@ var str: PWideChar;
 ////////////////////////////////////////////////////////////////////////////////
 // modules:
 
-function TRCSIFace.IsModule(Module:Cardinal):Boolean;
+function TRCSIFace.IsModule(Module: Cardinal): Boolean;
  begin
   if (Assigned(dllFuncIsModule)) then
     Result := dllFuncIsModule(Module)
@@ -1102,7 +1102,7 @@ function TRCSIFace.IsModule(Module:Cardinal):Boolean;
     raise ERCSFuncNotAssigned.Create('FFuncModuleExists not assigned');
  end;
 
-function TRCSIFace.IsModuleFailure(module:Cardinal):Boolean;
+function TRCSIFace.IsModuleFailure(module: Cardinal): Boolean;
  begin
   if (Assigned(dllFuncIsModuleFailure)) then
     Result := dllFuncIsModuleFailure(Module)
@@ -1110,12 +1110,12 @@ function TRCSIFace.IsModuleFailure(module:Cardinal):Boolean;
     raise ERCSFuncNotAssigned.Create('FFuncIsModuleFailure not assigned');
  end;
 
-function TRCSIFace.IsNonFailedModule(module:Cardinal):Boolean;
+function TRCSIFace.IsNonFailedModule(module: Cardinal): Boolean;
  begin
   Result := ((Self.IsModule(module)) and (not Self.IsModuleFailure(module)));
  end;
 
-function TRCSIFace.GetModuleCount():Cardinal;
+function TRCSIFace.GetModuleCount(): Cardinal;
  begin
   if (Assigned(dllFuncGetModuleCount)) then
     Result := dllFuncGetModuleCount()
@@ -1123,7 +1123,7 @@ function TRCSIFace.GetModuleCount():Cardinal;
     raise ERCSFuncNotAssigned.Create('FFuncGetModuleCount not assigned');
  end;
 
-function TRCSIFace.GetMaxModuleAddr():Cardinal;
+function TRCSIFace.GetMaxModuleAddr(): Cardinal;
  begin
   if (Assigned(dllFuncGetMaxModuleAddr)) then
     Result := dllFuncGetMaxModuleAddr()
@@ -1131,7 +1131,7 @@ function TRCSIFace.GetMaxModuleAddr():Cardinal;
     raise ERCSFuncNotAssigned.Create('FFuncGetMaxModuleAddr not assigned');
  end;
 
-function TRCSIFace.GetModuleType(Module:Cardinal):string;
+function TRCSIFace.GetModuleType(Module: Cardinal): string;
 const STR_LEN: Integer = 32;
 var str: PWideChar;
     res: Integer;
@@ -1169,10 +1169,10 @@ var str: PWideChar;
    end;
  end;
 
-function TRCSIFace.GetModuleName(Module:Cardinal):string;
+function TRCSIFace.GetModuleName(Module: Cardinal): string;
 const STR_LEN: Integer = 128;
-var str:PWideChar;
-    res:Integer;
+var str: PWideChar;
+    res: Integer;
  begin
   GetMem(str, SizeOf(WideChar)*(STR_LEN+1));
   try
@@ -1189,7 +1189,7 @@ var str:PWideChar;
   end;
  end;
 
-function TRCSIFace.GetModuleFW(Module:Cardinal):string;
+function TRCSIFace.GetModuleFW(Module: Cardinal): string;
 const STR_LEN: Integer = 16;
 var str: PWideChar;
     res: Integer;
@@ -1212,7 +1212,7 @@ var str: PWideChar;
   end;
  end;
 
-function TRCSIFace.GetModuleInputsCount(Module:Cardinal):Cardinal;
+function TRCSIFace.GetModuleInputsCount(Module: Cardinal): Cardinal;
  begin
   if (not Assigned(dllFuncGetModuleInputsCount)) then
     Exit(16);
@@ -1223,7 +1223,7 @@ function TRCSIFace.GetModuleInputsCount(Module:Cardinal):Cardinal;
     raise ERCSInvalidModuleAddr.Create('Invalid module adderess: '+IntToStr(Module)+'!');
  end;
 
-function TRCSIFace.GetModuleOutputsCount(Module:Cardinal):Cardinal;
+function TRCSIFace.GetModuleOutputsCount(Module: Cardinal): Cardinal;
  begin
   if (not Assigned(dllFuncGetModuleOutputsCount)) then
     Exit(16);
@@ -1237,7 +1237,7 @@ function TRCSIFace.GetModuleOutputsCount(Module:Cardinal):Cardinal;
 ////////////////////////////////////////////////////////////////////////////////
 // versions:
 
-function TRCSIFace.GetDeviceVersion():string;
+function TRCSIFace.GetDeviceVersion(): string;
 const STR_LEN: Integer = 32;
 var str: PWideChar;
     res: Integer;
@@ -1258,7 +1258,7 @@ var str: PWideChar;
   end;
  end;
 
-function TRCSIFace.GetDllVersion():String;
+function TRCSIFace.GetDllVersion(): String;
 const STR_LEN: Integer = 32;
 var str: PWideChar;
  begin
@@ -1276,8 +1276,8 @@ var str: PWideChar;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-class function TRCSIFace.IsApiVersionSupport(version:Cardinal):Boolean;
-var i:Integer;
+class function TRCSIFace.IsApiVersionSupport(version: Cardinal): Boolean;
+var i: Integer;
 begin
  for i := Low(_RCS_API_SUPPORTED_VERSIONS) to High(_RCS_API_SUPPORTED_VERSIONS) do
    if (_RCS_API_SUPPORTED_VERSIONS[i] = version) then
@@ -1288,7 +1288,7 @@ end;
 ////////////////////////////////////////////////////////////////////////////////
 
 procedure TRCSIFace.PickApiVersion();
-var i:Integer;
+var i: Integer;
 begin
  for i := High(_RCS_API_SUPPORTED_VERSIONS) downto Low(_RCS_API_SUPPORTED_VERSIONS) do
   begin
@@ -1306,7 +1306,7 @@ end;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function TRCSIFace.IsSimulation():Boolean;
+function TRCSIFace.IsSimulation(): Boolean;
 begin
  if (Assigned(Self.dllFuncIsSimulation)) then
    Result := Self.dllFuncIsSimulation()
