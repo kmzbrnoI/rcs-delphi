@@ -9,7 +9,7 @@
 {
    LICENSE:
 
-   Copyright 2017-2020 Jan Horacek, Michal Petrilak
+   Copyright 2017-2021 Jan Horacek, Michal Petrilak
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -94,7 +94,6 @@ type
   TDllSetLogLevel = procedure(loglevel: Cardinal); stdcall;
   TDllGetLogLevel = function(): Cardinal; stdcall;
 
-  TDllOpenDevice = function(device: PChar; persist: Boolean): Integer; stdcall;
   TDllBoolGetter = function(): Boolean; stdcall;
   TDllModuleGet = function(module, port: Cardinal): Integer; stdcall;
   TDllModuleSet = function(module, port: Cardinal; state: Integer): Integer; stdcall;
@@ -163,7 +162,6 @@ type
 
     // open/close
     dllFuncOpen : TDllFGeneral;
-    dllFuncOpenDevice : TDllOpenDevice;
     dllFuncClose : TDllFGeneral;
     dllFuncOpened : TDllBoolGetter;
 
@@ -254,7 +252,6 @@ type
 
      // device open/close
      procedure Open();
-     procedure OpenDevice(device: string; persist: Boolean);
      procedure Close();
      function Opened(): Boolean;
 
@@ -377,7 +374,6 @@ procedure TRCSIFace.Reset();
 
   // open/close
   dllFuncOpen := nil;
-  dllFuncOpenDevice := nil;
   dllFuncClose := nil;
   dllFuncOpened := nil;
 
@@ -600,8 +596,6 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   // open/close
   dllFuncOpen := TDllFGeneral(GetProcAddress(dllHandle, 'Open'));
   if (not Assigned(dllFuncOpen)) then unbound.Add('Open');
-  dllFuncOpenDevice := TDllOpenDevice(GetProcAddress(dllHandle, 'OpenDevice'));
-  if (not Assigned(dllFuncOpenDevice)) then unbound.Add('OpenDevice');
   dllFuncClose := TDllFGeneral(GetProcAddress(dllHandle, 'Close'));
   if (not Assigned(dllFuncClose)) then unbound.Add('Close');
   dllFuncOpened := TDllBoolGetter(GetProcAddress(dllHandle, 'Opened'));
@@ -852,22 +846,6 @@ var res: Integer;
   else if (res <> 0) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
-
-procedure TRCSIFace.OpenDevice(device: string; persist: Boolean);
-var res: Integer;
- begin
-  if (not Assigned(dllFuncOpenDevice)) then
-    raise ERCSFuncNotAssigned.Create('FFuncOpenDevice not assigned');
-
-  res := dllFuncOpenDevice(PChar(device), persist);
-
-  if (res = RCS_ALREADY_OPENNED) then
-    raise ERCSAlreadyOpened.Create('Device already opened!')
-  else if (res = RCS_CANNOT_OPEN_PORT) then
-    raise ERCSCannotOpenPort.Create('Cannot open this port!')
-  else if (res <> 0) then
-    raise ERCSGeneralException.Create('General exception in RCS library!');
-end;
 
 procedure TRCSIFace.Close();
 var res: Integer;
