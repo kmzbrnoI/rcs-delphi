@@ -51,8 +51,8 @@ const
   _RCS_MOD_MTB_TTL_ID = $60;
   _RCS_MOD_MTB_TTLOUT_ID = $70;
 
-  _RCS_API_SUPPORTED_VERSIONS : array[0..0] of Cardinal = (
-    $0301 // v1.3
+  _RCS_API_SUPPORTED_VERSIONS : array[0..1] of Cardinal = (
+    $0301, $0401 // v1.3, v1.4
   );
 
 type
@@ -180,10 +180,6 @@ type
     dllFuncGetInputType : TDllModuleGet;
     dllFuncGetOutputType : TDllModuleGet;
 
-    // devices
-    dllFuncGetDeviceCount : TDllFGeneral;
-    dllFuncGetDeviceSerial : TDllDeviceSerialGetter;
-
     // modules
     dllFuncIsModule : TDllModuleBoolGetter;
     dllFuncIsModuleFailure: TDllModuleBoolGetter;
@@ -244,7 +240,7 @@ type
      // file I/O
      procedure LoadConfig(fn: string);
      procedure SaveConfig(fn: string);
-     procedure SetConfigFilaName(fn: string);
+     procedure SetConfigFileName(fn: string);
 
      // logging
      procedure SetLogLevel(loglevel: TRCSLogLevel);
@@ -275,10 +271,6 @@ type
 
      function GetInputType(module, port: Cardinal): TRCSIPortType;
      function GetOutputType(module, port: Cardinal): TRCSOPortType;
-
-     // MTB-USB board:
-     function GetDeviceCount(): Integer;
-     function GetDeviceSerial(index: Integer): string;
 
      // modules:
      function IsModule(Module: Cardinal): Boolean;
@@ -317,6 +309,7 @@ type
      property Lib: string read dllName;
      property apiVersion: Cardinal read mApiVersion;
      property simulation: Boolean read IsSimulation;
+     function apiVersionStr(): string;
 
   end;
 
@@ -400,10 +393,6 @@ procedure TRCSIFace.Reset();
   dllFuncSetInput := nil;
   dllFuncGetInputType := nil;
   dllFuncGetOutputType := nil;
-
-  // devices
-  dllFuncGetDeviceCount := nil;
-  dllFuncGetDeviceSerial := nil;
 
   // modules
   dllFuncIsModule := nil;
@@ -597,12 +586,11 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   dllFuncSaveConfig := TDllFileIO(GetProcAddress(dllHandle, 'SaveConfig'));
   if (not Assigned(dllFuncSaveConfig)) then unbound.Add('SaveConfig');
   dllFuncSetConfigFileName := TDllFileIOProc(GetProcAddress(dllHandle, 'SetConfigFileName'));
-  if (not Assigned(dllFuncSetConfigFileName)) then unbound.Add('SetConfigFileName');
 
   // logging
-  dllFuncSetLogLevel     := TDllSetLogLevel(GetProcAddress(dllHandle, 'SetLogLevel'));
+  dllFuncSetLogLevel := TDllSetLogLevel(GetProcAddress(dllHandle, 'SetLogLevel'));
   if (not Assigned(dllFuncSetLogLevel)) then unbound.Add('SetLogLevel');
-  dllFuncGetLogLevel     := TDllGetLogLevel(GetProcAddress(dllHandle, 'GetLogLevel'));
+  dllFuncGetLogLevel := TDllGetLogLevel(GetProcAddress(dllHandle, 'GetLogLevel'));
   if (not Assigned(dllFuncGetLogLevel)) then unbound.Add('GetLogLevel');
 
   // dialogs
@@ -634,19 +622,13 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   if (not Assigned(dllFuncGetOutput)) then unbound.Add('GetOutput');
   dllFuncSetOutput := TDllModuleSet(GetProcAddress(dllHandle, 'SetOutput'));
   if (not Assigned(dllFuncSetOutput)) then unbound.Add('SetOutput');
+
   dllFuncSetInput := TDllModuleSet(GetProcAddress(dllHandle, 'SetInput'));
-  if (not Assigned(dllFuncSetInput)) then unbound.Add('SetInput');
 
   dllFuncGetInputType := TDllModuleGet(GetProcAddress(dllHandle, 'GetInputType'));
   if (not Assigned(dllFuncGetInputType)) then unbound.Add('GetInputType');
   dllFuncGetOutputType := TDllModuleGet(GetProcAddress(dllHandle, 'GetOutputType'));
   if (not Assigned(dllFuncGetOutputType)) then unbound.Add('GetOutputType');
-
-  // devices
-  dllFuncGetDeviceCount := TDllFGeneral(GetProcAddress(dllHandle, 'GetDeviceCount'));
-  if (not Assigned(dllFuncGetDeviceCount)) then unbound.Add('GetDeviceCount');
-  dllFuncGetDeviceSerial := TDllDeviceSerialGetter(GetProcAddress(dllHandle, 'GetDeviceSerial'));
-  if (not Assigned(dllFuncGetDeviceSerial)) then unbound.Add('GetDeviceSerial');
 
   // modules
   dllFuncIsModule := TDllModuleBoolGetter(GetProcAddress(dllHandle, 'IsModule'));
@@ -789,7 +771,7 @@ var res: Integer;
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
 
-procedure TRCSIFace.SetConfigFilaName(fn: string);
+procedure TRCSIFace.SetConfigFileName(fn: string);
  begin
   if (not Assigned(dllFuncSetConfigFileName)) then
     raise ERCSFuncNotAssigned.Create('FFuncSetConfigFileName not assigned');
@@ -802,17 +784,15 @@ end;
 procedure TRCSIFace.SetLogLevel(loglevel: TRCSLogLevel);
  begin
   if (not Assigned(dllFuncSetLogLevel)) then
-    raise ERCSFuncNotAssigned.Create('FFuncSetLogLevel not assigned')
-  else
-    dllFuncSetLogLevel(Cardinal(loglevel));
+    raise ERCSFuncNotAssigned.Create('FFuncSetLogLevel not assigned');
+  dllFuncSetLogLevel(Cardinal(loglevel));
  end;
 
 function TRCSIFace.GetLogLevel(): TRCSLogLevel;
  begin
   if (not Assigned(dllFuncGetLogLevel)) then
-    raise ERCSFuncNotAssigned.Create('FFuncGetLogLevel not assigned')
-  else
-    Result := TRCSLogLevel(dllFuncGetLogLevel());
+    raise ERCSFuncNotAssigned.Create('FFuncGetLogLevel not assigned');
+  Result := TRCSLogLevel(dllFuncGetLogLevel());
  end;
 
 class function TRCSIFace.LogLevelToString(ll: TRCSLogLevel): string;
@@ -1065,33 +1045,6 @@ var res: Integer;
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
-// MTB-USB board:
-
-function TRCSIFace.GetDeviceCount(): Integer;
- begin
-  if (Assigned(dllFuncGetDeviceCount)) then
-    Result := dllFuncGetDeviceCount()
-  else
-    raise ERCSFuncNotAssigned.Create('FFuncGetDeviceCount not assigned');
- end;
-
-function TRCSIFace.GetDeviceSerial(index: Integer): string;
-const STR_LEN: Integer = 64;
-var str: PWideChar;
- begin
-  if (not Assigned(dllFuncGetDeviceSerial)) then
-    raise ERCSFuncNotAssigned.Create('FFuncGetDevicSerial not assigned');
-
-  GetMem(str, SizeOf(WideChar)*(STR_LEN+1));
-  try
-    dllFuncGetDeviceSerial(index, str, STR_LEN);
-    Result := string(str);
-  finally
-    FreeMem(str);
-  end;
- end;
-
-////////////////////////////////////////////////////////////////////////////////
 // modules:
 
 function TRCSIFace.IsModule(Module: Cardinal): Boolean;
@@ -1308,10 +1261,17 @@ end;
 
 function TRCSIFace.IsSimulation(): Boolean;
 begin
- if (Assigned(Self.dllFuncIsSimulation)) then
+ if ((Assigned(Self.dllFuncIsSimulation)) and (Assigned(Self.dllFuncSetInput))) then
    Result := Self.dllFuncIsSimulation()
  else
    Result := false;
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+
+function TRCSIFace.apiVersionStr(): string;
+begin
+ Result := IntToStr(Self.mApiVersion and $FF) + '.' + IntToStr((Self.mApiVersion shr 8) and $FF);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
