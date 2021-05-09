@@ -66,6 +66,17 @@ type
     llDebug = 6
   );
 
+  TRCSFlickerFreq = (
+    rff60 = 60,
+    rff120 = 120,
+    rff180 = 180,
+    rff240 = 240,
+    rff320 = 320,
+    rff600 = 600,
+    rff33 = 33,
+    rff66 = 66
+  );
+
   ///////////////////////////////////////////////////////////////////////////
   // Events called from library to TRCSIFace:
 
