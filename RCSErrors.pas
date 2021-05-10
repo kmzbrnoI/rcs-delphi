@@ -62,6 +62,7 @@ const
 
  RCS_MODULE_FAILED = 3141;
  RCS_MODULE_RESTORED = 3142;
+ RCS_UNSUPPORTED_API_VERSION = 4000;
 
 type
   RCSException = class(Exception);
