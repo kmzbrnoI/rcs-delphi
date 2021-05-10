@@ -964,8 +964,8 @@ var res: Integer;
     raise ERCSModuleFailed.Create('Module '+IntToStr(module)+' failed!')
   else if (res = RCS_PORT_INVALID_NUMBER) then
     raise ERCSInvalidModulePort.Create('Invalid port number!')
-  else if (res = RCS_INVALID_SCOM_CODE) then
-    raise ERCSInvalidScomCode.Create('Invalid scom code : '+IntToStr(state)+'!')
+  else if (res = RCS_PORT_INVALID_VALUE) then
+    raise ERCSInvalidScomCode.Create('Invalid port value : '+IntToStr(state)+'!')
   else if (res <> 0) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
@@ -984,6 +984,8 @@ var res: Integer;
     raise ERCSModuleFailed.Create('Module '+IntToStr(module)+' failed!')
   else if (res = RCS_PORT_INVALID_NUMBER) then
     raise ERCSInvalidModulePort.Create('Invalid port number!')
+  else if (res = RCS_PORT_INVALID_VALUE) then
+    raise ERCSInvalidScomCode.Create('Invalid port value : '+IntToStr(state)+'!')
   else if (res <> 0) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
