@@ -943,7 +943,9 @@ var tmp: Integer;
   if (tmp = RCS_NOT_STARTED) then
     raise ERCSNotStarted.Create('Railroad Control System not started!')
   else if (tmp = RCS_GENERAL_EXCEPTION) then
-    raise ERCSGeneralException.Create('General exception in RCS library!');
+    raise ERCSGeneralException.Create('General exception in RCS library!')
+  else if (tmp = RCS_MODULE_DEPRECATED_FAILED) then
+    tmp := RCS_MODULE_FAILED;
 
   Result := TRCSInputState(tmp);
  end;
@@ -960,7 +962,7 @@ var res: Integer;
     raise ERCSNotStarted.Create('Railroad Control System not started!')
   else if (res = RCS_MODULE_INVALID_ADDR) then
     raise ERCSModuleNotAvailable.Create('Module '+IntToStr(module)+' not available on bus!')
-  else if (res = RCS_MODULE_FAILED) then
+  else if ((res = RCS_MODULE_FAILED) or (res = RCS_MODULE_DEPRECATED_FAILED)) then
     raise ERCSModuleFailed.Create('Module '+IntToStr(module)+' failed!')
   else if (res = RCS_PORT_INVALID_NUMBER) then
     raise ERCSInvalidModulePort.Create('Invalid port number!')
@@ -980,7 +982,7 @@ var res: Integer;
 
   if (res = RCS_MODULE_INVALID_ADDR) then
     raise ERCSModuleNotAvailable.Create('Module '+IntToStr(module)+' not available on bus!')
-  else if (res = RCS_MODULE_FAILED) then
+  else if ((res = RCS_MODULE_FAILED) or (res = RCS_MODULE_DEPRECATED_FAILED)) then
     raise ERCSModuleFailed.Create('Module '+IntToStr(module)+' failed!')
   else if (res = RCS_PORT_INVALID_NUMBER) then
     raise ERCSInvalidModulePort.Create('Invalid port number!')
