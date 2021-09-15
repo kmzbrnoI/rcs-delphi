@@ -66,17 +66,6 @@ type
     llDebug = 6
   );
 
-  TRCSFlickerFreq = (
-    rff60 = 60,
-    rff120 = 120,
-    rff180 = 180,
-    rff240 = 240,
-    rff320 = 320,
-    rff600 = 600,
-    rff33 = 33,
-    rff66 = 66
-  );
-
   ///////////////////////////////////////////////////////////////////////////
   // Events called from library to TRCSIFace:
 
@@ -133,6 +122,19 @@ type
     notYetScanned = RCS_INPUT_NOT_YET_SCANNED,
     unavailableModule = RCS_MODULE_INVALID_ADDR,
     unavailablePort = RCS_PORT_INVALID_NUMBER
+  );
+
+  TRCSOutputState = (
+    osDisabled = 0,
+    osEnabled = 1,
+    osf60 = 60,
+    osf120 = 120,
+    osf180 = 180,
+    osf240 = 240,
+    osf300 = 300,
+    osf600 = 600,
+    osf33 = 33,
+    osf66 = 66
   );
 
   ///////////////////////////////////////////////////////////////////////////
@@ -272,7 +274,8 @@ type
      function Started(): Boolean;
 
      // I/O functions:
-     procedure SetOutput(module, port: Cardinal; state: Integer);
+     procedure SetOutput(module, port: Cardinal; state: Integer); overload;
+     procedure SetOutput(module, port: Cardinal; state: TRCSOutputState); overload;
      function GetInput(module, port: Cardinal): TRCSInputState;
      procedure SetInput(module, port: Cardinal; State : Integer);
      function GetOutput(module, port: Cardinal): Integer;
@@ -626,7 +629,7 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   dllFuncGetOutput := TDllModuleGet(GetProcAddress(dllHandle, 'GetOutput'));
   if (not Assigned(dllFuncGetOutput)) then unbound.Add('GetOutput');
   dllFuncSetOutput := TDllModuleSet(GetProcAddress(dllHandle, 'SetOutput'));
-  if (not Assigned(dllFuncSetOutput)) then unbound.Add('SetOutput');
+  if (not Assigned(dllFuncSetOutput)) then unbound.Add('SetOutputf');
 
   dllFuncSetInput := TDllModuleSet(GetProcAddress(dllHandle, 'SetInput'));
 
@@ -971,6 +974,11 @@ var res: Integer;
   else if (res <> 0) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
+
+procedure TRCSIFace.SetOutput(module, port: Cardinal; state: TRCSOutputState);
+begin
+  Self.SetOutput(module, port, Integer(state));
+end;
 
 procedure TRCSIFace.SetInput(module, port: Cardinal; state: Integer);
 var res: Integer;
