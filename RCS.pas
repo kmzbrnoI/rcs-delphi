@@ -279,6 +279,7 @@ type
      function GetInput(module, port: Cardinal): TRCSInputState;
      procedure SetInput(module, port: Cardinal; State : Integer);
      function GetOutput(module, port: Cardinal): Integer;
+     function GetOutputState(module, port: Cardinal): TRCSOutputState; overload;
 
      function GetInputType(module, port: Cardinal): TRCSIPortType;
      function GetOutputType(module, port: Cardinal): TRCSOPortType;
@@ -1012,6 +1013,11 @@ function TRCSIFace.GetOutput(module, port: Cardinal): Integer;
   else if (Result = RCS_GENERAL_EXCEPTION) then
     raise ERCSGeneralException.Create('General exception in RCS library!');
  end;
+
+function TRCSIFace.GetOutputState(module, port: Cardinal): TRCSOutputState;
+begin
+  Result := TRCSOutputState(Self.GetOutput(module, port));
+end;
 
 function TRCSIFace.GetInputType(module, port: Cardinal): TRCSIPortType;
 var res: Integer;
