@@ -134,7 +134,11 @@ type
     osf300 = 300,
     osf600 = 600,
     osf33 = 33,
-    osf66 = 66
+    osf66 = 66,
+    osFailure = RCS_MODULE_FAILED,
+    osNotYetScanned = RCS_INPUT_NOT_YET_SCANNED,
+    osUnavailableModule = RCS_MODULE_INVALID_ADDR,
+    osUnavailablePort = RCS_PORT_INVALID_NUMBER
   );
 
   ///////////////////////////////////////////////////////////////////////////
