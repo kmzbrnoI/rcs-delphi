@@ -51,8 +51,10 @@ const
   _RCS_MOD_MTB_TTL_ID = $60;
   _RCS_MOD_MTB_TTLOUT_ID = $70;
 
-  _RCS_API_SUPPORTED_VERSIONS : array[0..1] of Cardinal = (
-    $0301, $0401 // v1.3, v1.4
+  // RCS API supported versions.
+  // Versions at end of the array are picked preferrably.
+  _RCS_API_SUPPORTED_VERSIONS : array[0..2] of Cardinal = (
+    $0301, $0401, $0501 // v1.3, v1.4, v1.5
   );
 
 type
@@ -198,6 +200,8 @@ type
     // modules
     dllFuncIsModule : TDllModuleBoolGetter;
     dllFuncIsModuleFailure: TDllModuleBoolGetter;
+    dllFuncIsModuleError: TDllModuleBoolGetter;
+    dllFuncIsModuleWarning: TDllModuleBoolGetter;
     dllFuncGetModuleCount : TDllFCardGeneral;
     dllFuncGetMaxModuleAddr : TDllFCardGeneral;
     dllFuncGetModuleType : TDllModuleIntGetter;
@@ -291,6 +295,8 @@ type
      // modules:
      function IsModule(Module: Cardinal): Boolean;
      function IsModuleFailure(module: Cardinal): Boolean;
+     function IsModuleError(module: Cardinal): Boolean;
+     function IsModuleWarning(module: Cardinal): Boolean;
      function IsNonFailedModule(module: Cardinal): Boolean;
      function GetModuleCount(): Cardinal;
      function GetMaxModuleAddr(): Cardinal;
@@ -326,6 +332,7 @@ type
      property apiVersion: Cardinal read mApiVersion;
      property simulation: Boolean read IsSimulation;
      function apiVersionStr(): string;
+     class function apiVersionComparable(version: Cardinal): Cardinal;
 
   end;
 
@@ -412,6 +419,8 @@ procedure TRCSIFace.Reset();
   // modules
   dllFuncIsModule := nil;
   dllFuncIsModuleFailure := nil;
+  dllFuncIsModuleError := nil;
+  dllFuncIsModuleWarning := nil;
   dllFuncGetModuleCount := nil;
   dllFuncGetMaxModuleAddr := nil;
   dllFuncGetModuleType := nil;
@@ -648,6 +657,12 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   if (not Assigned(dllFuncIsModule)) then unbound.Add('IsModule');
   dllFuncIsModuleFailure := TDllModuleBoolGetter(GetProcAddress(dllHandle, 'IsModuleFailure'));
   if (not Assigned(dllFuncIsModuleFailure)) then unbound.Add('IsModuleFailure');
+  dllFuncIsModuleError := TDllModuleBoolGetter(GetProcAddress(dllHandle, 'IsModuleError'));
+  if ((not Assigned(dllFuncIsModuleError)) and (apiVersionComparable(Self.mApiVersion) >= $0105)) then
+    unbound.Add('IsModuleError');
+  dllFuncIsModuleWarning := TDllModuleBoolGetter(GetProcAddress(dllHandle, 'IsModuleWarning'));
+  if ((not Assigned(dllFuncIsModuleWarning)) and (apiVersionComparable(Self.mApiVersion) >= $0105)) then
+    unbound.Add('IsModuleWarning');
   dllFuncGetModuleCount := TDllFCardGeneral(GetProcAddress(dllHandle, 'GetModuleCount'));
   if (not Assigned(dllFuncGetModuleCount)) then unbound.Add('GetModuleCount');
   dllFuncGetMaxModuleAddr := TDllFCardGeneral(GetProcAddress(dllHandle, 'GetMaxModuleAddr'));
@@ -1074,6 +1089,22 @@ function TRCSIFace.IsModuleFailure(module: Cardinal): Boolean;
     raise ERCSFuncNotAssigned.Create('FFuncIsModuleFailure not assigned');
  end;
 
+function TRCSIFace.IsModuleError(module: Cardinal): Boolean;
+begin
+  if (Assigned(dllFuncIsModuleError)) then
+    Result := dllFuncIsModuleError(Module)
+  else
+    Result := false; // not implemented in older API (<= 1.4)
+end;
+
+function TRCSIFace.IsModuleWarning(module: Cardinal): Boolean;
+begin
+  if (Assigned(dllFuncIsModuleWarning)) then
+    Result := dllFuncIsModuleWarning(Module)
+  else
+    Result := false; // not implemented in older API (<= 1.4)
+end;
+
 function TRCSIFace.IsNonFailedModule(module: Cardinal): Boolean;
  begin
   Result := ((Self.IsModule(module)) and (not Self.IsModuleFailure(module)));
@@ -1252,9 +1283,8 @@ end;
 ////////////////////////////////////////////////////////////////////////////////
 
 procedure TRCSIFace.PickApiVersion();
-var i: Integer;
 begin
- for i := High(_RCS_API_SUPPORTED_VERSIONS) downto Low(_RCS_API_SUPPORTED_VERSIONS) do
+ for var i := High(_RCS_API_SUPPORTED_VERSIONS) downto Low(_RCS_API_SUPPORTED_VERSIONS) do
   begin
    if (Self.dllFuncApiSupportsVersion(_RCS_API_SUPPORTED_VERSIONS[i])) then
     begin
@@ -1283,6 +1313,12 @@ end;
 function TRCSIFace.apiVersionStr(): string;
 begin
  Result := IntToStr(Self.mApiVersion and $FF) + '.' + IntToStr((Self.mApiVersion shr 8) and $FF);
+end;
+
+class function TRCSIFace.apiVersionComparable(version: Cardinal): Cardinal;
+begin
+  // revert two lower bytes
+  Result := ((version and $FF) shl 8) or ((version shr 8) and $FF);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
