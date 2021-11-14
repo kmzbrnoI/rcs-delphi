@@ -547,6 +547,8 @@ procedure dllOnInputChanged(Sender: TObject; data: Pointer; module: Cardinal); s
  begin
   try
     if (Assigned(TRCSIFace(data).OnInputChanged)) then TRCSIFace(data).OnInputChanged(TRCSIFace(data), module);
+    if (TRCSIFace.apiVersionComparable(TRCSIFace(data).apiVersion) < $0105) then
+      if (Assigned(TRCSIFace(data).OnModuleChanged)) then TRCSIFace(data).OnModuleChanged(TRCSIFace(data), module);
   except
 
   end;
@@ -556,6 +558,8 @@ procedure dllOnOutputChanged(Sender: TObject; data: Pointer; module: Cardinal); 
  begin
   try
     if (Assigned(TRCSIFace(data).OnOutputChanged)) then TRCSIFace(data).OnOutputChanged(TRCSIFace(data), module);
+    if (TRCSIFace.apiVersionComparable(TRCSIFace(data).apiVersion) < $0105) then
+      if (Assigned(TRCSIFace(data).OnModuleChanged)) then TRCSIFace(data).OnModuleChanged(TRCSIFace(data), module);
   except
 
   end;
