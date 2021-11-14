@@ -235,6 +235,7 @@ type
 
     eOnError: TErrorEvent;
     eOnLog : TLogEvent;
+    eOnModuleChange : TModuleChangeEvent;
     eOnInputChange : TModuleChangeEvent;
     eOnOutputChange : TModuleChangeEvent;
     eOnScanned : TNotifyEvent;
@@ -323,6 +324,7 @@ type
 
      property OnError: TErrorEvent read eOnError write eOnError;
      property OnLog: TLogEvent read eOnLog write eOnLog;
+     property OnModuleChanged: TModuleChangeEvent read eOnModuleChange write eOnModuleChange;
      property OnInputChanged: TModuleChangeEvent read eOnInputChange write eOnInputChange;
      property OnOutputChanged: TModuleChangeEvent read eOnOutputChange write eOnOutputChange;
 
@@ -532,6 +534,15 @@ procedure dllOnLog(Sender: TObject; data: Pointer; logLevel: Integer; msg: PChar
   end;
  end;
 
+procedure dllOnModuleChanged(Sender: TObject; data: Pointer; module: Cardinal); stdcall;
+ begin
+  try
+    if (Assigned(TRCSIFace(data).OnModuleChanged)) then TRCSIFace(data).OnModuleChanged(TRCSIFace(data), module);
+  except
+
+  end;
+ end;
+
 procedure dllOnInputChanged(Sender: TObject; data: Pointer; module: Cardinal); stdcall;
  begin
   try
@@ -732,6 +743,11 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   dllFuncOnLogBind := TDllStdLogBind(GetProcAddress(dllHandle, 'BindOnLog'));
   if (Assigned(dllFuncOnLogBind)) then dllFuncOnLogBind(@dllOnLog, self)
   else unbound.Add('BindOnLog');
+
+  dllFuncOnChangedBind := TDllStdModuleChangeBind(GetProcAddress(dllHandle, 'BindOnModuleChanged'));
+  if (Assigned(dllFuncOnChangedBind) and (apiVersionComparable(Self.mApiVersion) >= $0105)) then
+    dllFuncOnChangedBind(@dllOnModuleChanged, self)
+  else unbound.Add('BindOnModuleChanged');
 
   dllFuncOnChangedBind := TDllStdModuleChangeBind(GetProcAddress(dllHandle, 'BindOnInputChanged'));
   if (Assigned(dllFuncOnChangedBind)) then dllFuncOnChangedBind(@dllOnInputChanged, self)
