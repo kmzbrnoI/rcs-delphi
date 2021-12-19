@@ -749,9 +749,12 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   else unbound.Add('BindOnLog');
 
   dllFuncOnChangedBind := TDllStdModuleChangeBind(GetProcAddress(dllHandle, 'BindOnModuleChanged'));
-  if (Assigned(dllFuncOnChangedBind) and (apiVersionComparable(Self.mApiVersion) >= $0105)) then
-    dllFuncOnChangedBind(@dllOnModuleChanged, self)
-  else unbound.Add('BindOnModuleChanged');
+  if (apiVersionComparable(Self.mApiVersion) >= $0105) then
+  begin
+    if (Assigned(dllFuncOnChangedBind)) then
+      dllFuncOnChangedBind(@dllOnModuleChanged, self)
+    else unbound.Add('BindOnModuleChanged');
+  end;
 
   dllFuncOnChangedBind := TDllStdModuleChangeBind(GetProcAddress(dllHandle, 'BindOnInputChanged'));
   if (Assigned(dllFuncOnChangedBind)) then dllFuncOnChangedBind(@dllOnInputChanged, self)
