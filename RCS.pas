@@ -1220,7 +1220,7 @@ var str: PWideChar;
     res := dllFuncGetModuleFW(Module, str, STR_LEN);
 
     if (res = RCS_MODULE_INVALID_ADDR) then
-      raise ERCSInvalidModuleAddr.Create('Invalid module adderess: '+IntToStr(Module)+'!')
+      raise ERCSInvalidModuleAddr.Create('Invalid module address: '+IntToStr(Module)+'!')
     else if (res <> 0) then
       raise ERCSGeneralException.Create('General exception in RCS library!');
 
@@ -1238,7 +1238,7 @@ function TRCSIFace.GetModuleInputsCount(Module: Cardinal): Cardinal;
   Result := dllFuncGetModuleInputsCount(Module);
 
   if (Result = RCS_MODULE_INVALID_ADDR) then
-    raise ERCSInvalidModuleAddr.Create('Invalid module adderess: '+IntToStr(Module)+'!');
+    raise ERCSInvalidModuleAddr.Create('Invalid module address: '+IntToStr(Module)+'!');
  end;
 
 function TRCSIFace.GetModuleOutputsCount(Module: Cardinal): Cardinal;
@@ -1249,7 +1249,7 @@ function TRCSIFace.GetModuleOutputsCount(Module: Cardinal): Cardinal;
   Result := dllFuncGetModuleOutputsCount(Module);
 
   if (Result = RCS_MODULE_INVALID_ADDR) then
-    raise ERCSInvalidModuleAddr.Create('Invalid module adderess: '+IntToStr(Module)+'!');
+    raise ERCSInvalidModuleAddr.Create('Invalid module address: '+IntToStr(Module)+'!');
  end;
 
 ////////////////////////////////////////////////////////////////////////////////
