@@ -695,9 +695,10 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
   dllFuncGetModuleFW := TDllModuleStringGetter(GetProcAddress(dllHandle, 'GetModuleFW'));
   if (not Assigned(dllFuncGetModuleFW)) then unbound.Add('GetModuleFW');
 
-  // these 2 function are not neccesarry, so we do not check bindings
   dllFuncGetModuleInputsCount := TDllModuleCardGetter(GetProcAddress(dllHandle, 'GetModuleInputsCount'));
+  if (not Assigned(dllFuncGetModuleInputsCount)) then unbound.Add('GetModuleInputsCount');
   dllFuncGetModuleOutputsCount := TDllModuleCardGetter(GetProcAddress(dllHandle, 'GetModuleOutputsCount'));
+  if (not Assigned(dllFuncGetModuleOutputsCount)) then unbound.Add('GetModuleOutputsCount');
 
   // versions
   dllFuncGetDeviceVersion := TDllDeviceVersionGetter(GetProcAddress(dllHandle, 'GetDeviceVersion'));
@@ -1233,7 +1234,7 @@ var str: PWideChar;
 function TRCSIFace.GetModuleInputsCount(Module: Cardinal): Cardinal;
  begin
   if (not Assigned(dllFuncGetModuleInputsCount)) then
-    Exit(16);
+    raise ERCSFuncNotAssigned.Create('GetModuleInputsCount not assigned');
 
   Result := dllFuncGetModuleInputsCount(Module);
 
@@ -1244,7 +1245,7 @@ function TRCSIFace.GetModuleInputsCount(Module: Cardinal): Cardinal;
 function TRCSIFace.GetModuleOutputsCount(Module: Cardinal): Cardinal;
  begin
   if (not Assigned(dllFuncGetModuleOutputsCount)) then
-    Exit(16);
+    raise ERCSFuncNotAssigned.Create('GetModuleOutputsCount not assigned');
 
   Result := dllFuncGetModuleOutputsCount(Module);
 
