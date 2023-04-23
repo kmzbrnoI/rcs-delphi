@@ -797,7 +797,7 @@ procedure TRCSIFace.LoadConfig(fn: string);
 var res: Integer;
  begin
   if (not Assigned(dllFuncLoadConfig)) then
-    raise ERCSFuncNotAssigned.Create('FFuncLoadConfig not assigned');
+    raise ERCSFuncNotAssigned.Create('LoadConfig not assigned');
 
   res := dllFuncLoadConfig(PChar(fn));
 
@@ -813,7 +813,7 @@ procedure TRCSIFace.SaveConfig(fn: string);
 var res: Integer;
  begin
   if (not Assigned(dllFuncSaveConfig)) then
-    raise ERCSFuncNotAssigned.Create('FFuncSaveConfig not assigned');
+    raise ERCSFuncNotAssigned.Create('SaveConfig not assigned');
 
   res := dllFuncSaveConfig(PChar(fn));
 
@@ -826,7 +826,7 @@ var res: Integer;
 procedure TRCSIFace.SetConfigFileName(fn: string);
  begin
   if (not Assigned(dllFuncSetConfigFileName)) then
-    raise ERCSFuncNotAssigned.Create('FFuncSetConfigFileName not assigned');
+    raise ERCSFuncNotAssigned.Create('SetConfigFileName not assigned');
   dllFuncSetConfigFileName(PChar(fn));
 end;
 
@@ -836,14 +836,14 @@ end;
 procedure TRCSIFace.SetLogLevel(loglevel: TRCSLogLevel);
  begin
   if (not Assigned(dllFuncSetLogLevel)) then
-    raise ERCSFuncNotAssigned.Create('FFuncSetLogLevel not assigned');
+    raise ERCSFuncNotAssigned.Create('SetLogLevel not assigned');
   dllFuncSetLogLevel(Cardinal(loglevel));
  end;
 
 function TRCSIFace.GetLogLevel(): TRCSLogLevel;
  begin
   if (not Assigned(dllFuncGetLogLevel)) then
-    raise ERCSFuncNotAssigned.Create('FFuncGetLogLevel not assigned');
+    raise ERCSFuncNotAssigned.Create('GetLogLevel not assigned');
   Result := TRCSLogLevel(dllFuncGetLogLevel());
  end;
 
@@ -870,7 +870,7 @@ procedure TRCSIFace.ShowConfigDialog();
   if (Assigned(dllFuncShowConfigDialog)) then
     dllFuncShowConfigDialog()
   else
-    raise ERCSFuncNotAssigned.Create('FFuncShowConfigDialog not assigned');
+    raise ERCSFuncNotAssigned.Create('ShowConfigDialog not assigned');
  end;
 
 procedure TRCSIFace.HideConfigDialog();
@@ -878,7 +878,7 @@ procedure TRCSIFace.HideConfigDialog();
   if (Assigned(dllFuncHideConfigDialog)) then
     dllFuncHideConfigDialog()
   else
-    raise ERCSFuncNotAssigned.Create('FFuncHideConfigDialog not assigned');
+    raise ERCSFuncNotAssigned.Create('HideConfigDialog not assigned');
  end;
 
 function TRCSIFace.HasDialog(): Boolean;
@@ -893,7 +893,7 @@ procedure TRCSIFace.Open();
 var res: Integer;
  begin
   if (not Assigned(dllFuncOpen)) then
-    raise ERCSFuncNotAssigned.Create('FFuncOpen not assigned');
+    raise ERCSFuncNotAssigned.Create('Open not assigned');
 
   res := dllFuncOpen();
 
@@ -909,7 +909,7 @@ procedure TRCSIFace.Close();
 var res: Integer;
  begin
   if (not Assigned(dllFuncClose)) then
-    raise ERCSFuncNotAssigned.Create('FFuncClose not assigned');
+    raise ERCSFuncNotAssigned.Create('Close not assigned');
 
   res := dllFuncClose();
 
@@ -924,7 +924,7 @@ var res: Integer;
 function TRCSIFace.Opened(): Boolean;
  begin
   if (not Assigned(dllFuncOpened)) then
-    raise ERCSFuncNotAssigned.Create('FFuncOpened not assigned')
+    raise ERCSFuncNotAssigned.Create('Opened not assigned')
   else
     Result := dllFuncOpened();
  end;
@@ -936,7 +936,7 @@ procedure TRCSIFace.Start();
 var res: Integer;
 begin
   if (not Assigned(dllFuncStart)) then
-    raise ERCSFuncNotAssigned.Create('FFuncStart not assigned');
+    raise ERCSFuncNotAssigned.Create('Start not assigned');
 
   res := dllFuncStart();
 
@@ -958,7 +958,7 @@ procedure TRCSIFace.Stop();
 var res: Integer;
 begin
   if (not Assigned(dllFuncStop)) then
-    raise ERCSFuncNotAssigned.Create('FFuncStop not assigned');
+    raise ERCSFuncNotAssigned.Create('Stop not assigned');
 
   res := dllFuncStop();
 
@@ -971,7 +971,7 @@ end;
 function TRCSIFace.Started(): Boolean;
 begin
   if (not Assigned(dllFuncStarted)) then
-    raise ERCSFuncNotAssigned.Create('FFuncStarted not assigned')
+    raise ERCSFuncNotAssigned.Create('Started not assigned')
   else
     Result := dllFuncStarted();
 end;
@@ -983,7 +983,7 @@ function TRCSIFace.GetInput(module, port: Cardinal): TRCSInputState;
 var tmp: Integer;
  begin
   if (not Assigned(dllFuncGetInput)) then
-    raise ERCSFuncNotAssigned.Create('FFuncGetInput not assigned');
+    raise ERCSFuncNotAssigned.Create('GetInput not assigned');
 
   tmp := dllFuncGetInput(module, port);
 
@@ -1001,7 +1001,7 @@ procedure TRCSIFace.SetOutput(module, port: Cardinal; state: Integer);
 var res: Integer;
  begin
   if (not Assigned(dllFuncSetOutput)) then
-    raise ERCSFuncNotAssigned.Create('FFuncSetOutput not assigned');
+    raise ERCSFuncNotAssigned.Create('SetOutput not assigned');
 
   res := dllFuncSetOutput(module, port, state);
 
@@ -1028,7 +1028,7 @@ procedure TRCSIFace.SetInput(module, port: Cardinal; state: Integer);
 var res: Integer;
  begin
   if (not Assigned(dllFuncSetInput)) then
-    raise ERCSFuncNotAssigned.Create('FFuncSetInput not assigned');
+    raise ERCSFuncNotAssigned.Create('SetInput not assigned');
 
   res := dllFuncSetInput(module, port, state);
 
@@ -1047,7 +1047,7 @@ var res: Integer;
 function TRCSIFace.GetOutput(module, port: Cardinal): Integer;
  begin
   if (not Assigned(dllFuncGetOutput)) then
-    raise ERCSFuncNotAssigned.Create('FFuncGetOutput not assigned');
+    raise ERCSFuncNotAssigned.Create('GetOutput not assigned');
 
   Result := dllFuncGetOutput(module, port);
 
@@ -1102,7 +1102,7 @@ function TRCSIFace.IsModule(Module: Cardinal): Boolean;
   if (Assigned(dllFuncIsModule)) then
     Result := dllFuncIsModule(Module)
   else
-    raise ERCSFuncNotAssigned.Create('FFuncModuleExists not assigned');
+    raise ERCSFuncNotAssigned.Create('ModuleExists not assigned');
  end;
 
 function TRCSIFace.IsModuleFailure(module: Cardinal): Boolean;
@@ -1110,7 +1110,7 @@ function TRCSIFace.IsModuleFailure(module: Cardinal): Boolean;
   if (Assigned(dllFuncIsModuleFailure)) then
     Result := dllFuncIsModuleFailure(Module)
   else
-    raise ERCSFuncNotAssigned.Create('FFuncIsModuleFailure not assigned');
+    raise ERCSFuncNotAssigned.Create('IsModuleFailure not assigned');
  end;
 
 function TRCSIFace.IsModuleError(module: Cardinal): Boolean;
@@ -1139,7 +1139,7 @@ function TRCSIFace.GetModuleCount(): Cardinal;
   if (Assigned(dllFuncGetModuleCount)) then
     Result := dllFuncGetModuleCount()
   else
-    raise ERCSFuncNotAssigned.Create('FFuncGetModuleCount not assigned');
+    raise ERCSFuncNotAssigned.Create('GetModuleCount not assigned');
  end;
 
 function TRCSIFace.GetMaxModuleAddr(): Cardinal;
@@ -1147,7 +1147,7 @@ function TRCSIFace.GetMaxModuleAddr(): Cardinal;
   if (Assigned(dllFuncGetMaxModuleAddr)) then
     Result := dllFuncGetMaxModuleAddr()
   else
-    raise ERCSFuncNotAssigned.Create('FFuncGetMaxModuleAddr not assigned');
+    raise ERCSFuncNotAssigned.Create('GetMaxModuleAddr not assigned');
  end;
 
 function TRCSIFace.GetModuleType(Module: Cardinal): string;
@@ -1156,7 +1156,7 @@ var str: PWideChar;
     res: Integer;
  begin
   if (not Assigned(dllFuncGetModuleTypeStr) and (not Assigned(dllFuncGetModuleType))) then
-    raise ERCSFuncNotAssigned.Create('FFuncGetModuleTypeStr not assigned');
+    raise ERCSFuncNotAssigned.Create('GetModuleTypeStr not assigned');
 
   if (Assigned(dllFuncGetModuleTypeStr)) then
    begin
@@ -1196,7 +1196,7 @@ var str: PWideChar;
   GetMem(str, SizeOf(WideChar)*(STR_LEN+1));
   try
     if (not Assigned(dllFuncGetModuleName)) then
-      raise ERCSFuncNotAssigned.Create('FFuncGetModuleName not assigned');
+      raise ERCSFuncNotAssigned.Create('GetModuleName not assigned');
 
     res := dllFuncGetModuleName(Module, str, STR_LEN);
 
@@ -1214,7 +1214,7 @@ var str: PWideChar;
     res: Integer;
  begin
   if (not Assigned(dllFuncGetModuleFW)) then
-    raise ERCSFuncNotAssigned.Create('FFuncGetModuleFirmware not assigned');
+    raise ERCSFuncNotAssigned.Create('GetModuleFW not assigned');
 
   GetMem(str, SizeOf(WideChar)*(STR_LEN+1));
   try
@@ -1262,7 +1262,7 @@ var str: PWideChar;
     res: Integer;
  begin
   if (not Assigned(dllFuncGetDeviceVersion)) then
-    raise ERCSFuncNotAssigned.Create('FFuncGetLibVersion not assigned');
+    raise ERCSFuncNotAssigned.Create('GetLibVersion not assigned');
 
   GetMem(str, SizeOf(WideChar)*(STR_LEN+1));
   try
@@ -1282,7 +1282,7 @@ const STR_LEN: Integer = 32;
 var str: PWideChar;
  begin
   if (not Assigned(dllFuncGetVersion)) then
-    raise ERCSFuncNotAssigned.Create('FFuncGetDriverVersion not assigned');
+    raise ERCSFuncNotAssigned.Create('GetDriverVersion not assigned');
 
   GetMem(str, SizeOf(WideChar)*(STR_LEN+1));
   try
