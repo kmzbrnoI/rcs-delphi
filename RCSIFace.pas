@@ -35,7 +35,7 @@
    dll functions (the do not have to exist)
 }
 
-unit RCS;
+unit RCSIFace;
 
 interface
 
