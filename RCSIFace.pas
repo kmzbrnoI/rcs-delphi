@@ -143,6 +143,17 @@ type
     osUnavailablePort = RCS_PORT_INVALID_NUMBER
   );
 
+  TRCSState = (
+    rsClosed = 0,
+    rsOpening = 1,
+    rsClosing = 2,
+    rsOpenStopped = 3,
+    rsStarting = 4,
+    rsStopping = 5,
+    rsStartedNotScanned = 6,
+    rsStartedScanned = 7
+  );
+
   ///////////////////////////////////////////////////////////////////////////
 
   TRCSIPortType = (
@@ -162,6 +173,7 @@ type
     dllName: string;
     dllHandle: NativeUInt;
     mApiVersion: Cardinal;
+    mState: TRCSState;
 
     // ------------------------------------------------------------------
     // Functions called to library:
@@ -243,6 +255,7 @@ type
      procedure Reset();
      procedure PickApiVersion();
      function IsSimulation(): Boolean;
+     function IsLibLoaded(): Boolean;
 
   public
 
@@ -275,12 +288,12 @@ type
      // device open/close
      procedure Open();
      procedure Close();
-     function Opened(): Boolean;
+     function Opened(): Boolean; // TODO Cancel completely?
 
      // communication start/stop
      procedure Start();
      procedure Stop();
-     function Started(): Boolean;
+     function Started(): Boolean; // TODO Cancel completely?
 
      // I/O functions:
      procedure SetOutput(module, port: Cardinal; state: Integer); overload;
@@ -307,6 +320,8 @@ type
      function GetModuleInputsCount(Module: Cardinal): Cardinal;
      function GetModuleOutputsCount(Module: Cardinal): Cardinal;
 
+     function IsStateActionInProgress(): Boolean;
+
      // versions:
      function GetDllVersion(): string;
      function GetDeviceVersion(): string;
@@ -330,9 +345,11 @@ type
 
      property OnScanned: TNotifyEvent read eOnScanned write eOnScanned;
 
-     property Lib: string read dllName;
+     property lib: string read dllName;
      property apiVersion: Cardinal read mApiVersion;
      property simulation: Boolean read IsSimulation;
+     property libLoaded: boolean read IsLibLoaded;
+     property state: TRCSState read mState;
      function apiVersionStr(): string;
      class function apiVersionComparable(version: Cardinal): Cardinal;
 
@@ -377,7 +394,8 @@ constructor TRCSIFace.Create();
 
 destructor TRCSIFace.Destroy();
 begin
-  if (Self.dllHandle <> 0) then Self.UnloadLib();
+  if (Self.dllHandle <> 0) then
+    Self.UnloadLib();
   Self.unbound.Free();
   inherited;
 end;
@@ -387,6 +405,8 @@ end;
 procedure TRCSIFace.Reset();
 begin
   Self.dllHandle := 0;
+  Self.dllName := '';
+  Self.mState := rsClosed;
   Self.mApiVersion := _RCS_API_SUPPORTED_VERSIONS[High(_RCS_API_SUPPORTED_VERSIONS)];
 
   dllFuncLoadConfig := nil;
@@ -447,7 +467,9 @@ end;
 procedure dllBeforeOpen(Sender: TObject; data: Pointer); stdcall;
 begin
   try
-    if (Assigned(TRCSIFace(data).BeforeOpen)) then TRCSIFace(data).BeforeOpen(TRCSIFace(data));
+    TRCSIFace(data).mState := rsOpening;
+    if (Assigned(TRCSIFace(data).BeforeOpen)) then
+      TRCSIFace(data).BeforeOpen(TRCSIFace(data));
   except
 
   end;
@@ -456,7 +478,9 @@ end;
 procedure dllAfterOpen(Sender: TObject; data: Pointer); stdcall;
 begin
   try
-    if (Assigned(TRCSIFace(data).AfterOpen)) then TRCSIFace(data).AfterOpen(TRCSIFace(data));
+    TRCSIFace(data).mState := rsOpenStopped;
+    if (Assigned(TRCSIFace(data).AfterOpen)) then
+      TRCSIFace(data).AfterOpen(TRCSIFace(data));
   except
 
   end;
@@ -465,7 +489,9 @@ end;
 procedure dllBeforeClose(Sender: TObject; data: Pointer); stdcall;
 begin
   try
-    if (Assigned(TRCSIFace(data).BeforeClose)) then TRCSIFace(data).BeforeClose(TRCSIFace(data));
+    TRCSIFace(data).mState := rsClosing;
+    if (Assigned(TRCSIFace(data).BeforeClose)) then
+      TRCSIFace(data).BeforeClose(TRCSIFace(data));
   except
 
   end;
@@ -474,7 +500,9 @@ end;
 procedure dllAfterClose(Sender: TObject; data: Pointer); stdcall;
 begin
   try
-    if (Assigned(TRCSIFace(data).AfterClose)) then TRCSIFace(data).AfterClose(TRCSIFace(data));
+    TRCSIFace(data).mState := rsClosed;
+    if (Assigned(TRCSIFace(data).AfterClose)) then
+      TRCSIFace(data).AfterClose(TRCSIFace(data));
   except
 
   end;
@@ -483,7 +511,9 @@ end;
 procedure dllBeforeStart(Sender: TObject; data: Pointer); stdcall;
 begin
   try
-    if (Assigned(TRCSIFace(data).BeforeStart)) then TRCSIFace(data).BeforeStart(TRCSIFace(data));
+    TRCSIFace(data).mState := rsStarting;
+    if (Assigned(TRCSIFace(data).BeforeStart)) then
+      TRCSIFace(data).BeforeStart(TRCSIFace(data));
   except
 
   end;
@@ -492,7 +522,9 @@ end;
 procedure dllAfterStart(Sender: TObject; data: Pointer); stdcall;
 begin
   try
-    if (Assigned(TRCSIFace(data).AfterStart)) then TRCSIFace(data).AfterStart(TRCSIFace(data));
+    TRCSIFace(data).mState := rsStartedNotScanned;
+    if (Assigned(TRCSIFace(data).AfterStart)) then
+      TRCSIFace(data).AfterStart(TRCSIFace(data));
   except
 
   end;
@@ -501,7 +533,9 @@ end;
 procedure dllBeforeStop(Sender: TObject; data: Pointer); stdcall;
 begin
   try
-    if (Assigned(TRCSIFace(data).BeforeStop)) then TRCSIFace(data).BeforeStop(TRCSIFace(data));
+    TRCSIFace(data).mState := rsStopping;
+    if (Assigned(TRCSIFace(data).BeforeStop)) then
+      TRCSIFace(data).BeforeStop(TRCSIFace(data));
   except
 
   end;
@@ -510,7 +544,9 @@ end;
 procedure dllAfterStop(Sender: TObject; data: Pointer); stdcall;
 begin
   try
-    if (Assigned(TRCSIFace(data).AfterStop)) then TRCSIFace(data).AfterStop(TRCSIFace(data));
+    TRCSIFace(data).mState := rsOpenStopped;
+    if (Assigned(TRCSIFace(data).AfterStop)) then
+      TRCSIFace(data).AfterStop(TRCSIFace(data));
   except
 
   end;
@@ -519,7 +555,8 @@ end;
 procedure dllOnError(Sender: TObject; data: Pointer; errValue: word; errAddr: Cardinal; errMsg: PChar); stdcall;
 begin
   try
-    if (Assigned(TRCSIFace(data).OnError)) then TRCSIFace(data).OnError(TRCSIFace(data), errValue, errAddr, errMsg);
+    if (Assigned(TRCSIFace(data).OnError)) then
+      TRCSIFace(data).OnError(TRCSIFace(data), errValue, errAddr, errMsg);
   except
 
   end;
@@ -528,7 +565,8 @@ end;
 procedure dllOnLog(Sender: TObject; data: Pointer; logLevel: NativeInt; msg: PChar); stdcall;
 begin
   try
-    if (Assigned(TRCSIFace(data).OnLog)) then TRCSIFace(data).OnLog(TRCSIFace(data), TRCSLogLevel(logLevel), msg);
+    if (Assigned(TRCSIFace(data).OnLog)) then
+      TRCSIFace(data).OnLog(TRCSIFace(data), TRCSLogLevel(logLevel), msg);
   except
 
   end;
@@ -537,7 +575,8 @@ end;
 procedure dllOnModuleChanged(Sender: TObject; data: Pointer; module: Cardinal); stdcall;
 begin
   try
-    if (Assigned(TRCSIFace(data).OnModuleChanged)) then TRCSIFace(data).OnModuleChanged(TRCSIFace(data), module);
+    if (Assigned(TRCSIFace(data).OnModuleChanged)) then
+      TRCSIFace(data).OnModuleChanged(TRCSIFace(data), module);
   except
 
   end;
@@ -546,9 +585,11 @@ end;
 procedure dllOnInputChanged(Sender: TObject; data: Pointer; module: Cardinal); stdcall;
 begin
   try
-    if (Assigned(TRCSIFace(data).OnInputChanged)) then TRCSIFace(data).OnInputChanged(TRCSIFace(data), module);
+    if (Assigned(TRCSIFace(data).OnInputChanged)) then
+      TRCSIFace(data).OnInputChanged(TRCSIFace(data), module);
     if (TRCSIFace.apiVersionComparable(TRCSIFace(data).apiVersion) < $0105) then
-      if (Assigned(TRCSIFace(data).OnModuleChanged)) then TRCSIFace(data).OnModuleChanged(TRCSIFace(data), module);
+      if (Assigned(TRCSIFace(data).OnModuleChanged)) then
+        TRCSIFace(data).OnModuleChanged(TRCSIFace(data), module);
   except
 
   end;
@@ -557,9 +598,11 @@ end;
 procedure dllOnOutputChanged(Sender: TObject; data: Pointer; module: Cardinal); stdcall;
 begin
   try
-    if (Assigned(TRCSIFace(data).OnOutputChanged)) then TRCSIFace(data).OnOutputChanged(TRCSIFace(data), module);
+    if (Assigned(TRCSIFace(data).OnOutputChanged)) then
+      TRCSIFace(data).OnOutputChanged(TRCSIFace(data), module);
     if (TRCSIFace.apiVersionComparable(TRCSIFace(data).apiVersion) < $0105) then
-      if (Assigned(TRCSIFace(data).OnModuleChanged)) then TRCSIFace(data).OnModuleChanged(TRCSIFace(data), module);
+      if (Assigned(TRCSIFace(data).OnModuleChanged)) then
+        TRCSIFace(data).OnModuleChanged(TRCSIFace(data), module);
   except
 
   end;
@@ -568,7 +611,9 @@ end;
 procedure dllOnScanned(Sender: TObject; data: Pointer); stdcall;
 begin
   try
-    if (Assigned(TRCSIFace(data).OnScanned)) then TRCSIFace(data).OnScanned(TRCSIFace(data));
+    TRCSIFace(data).mState := rsStartedScanned;
+    if (Assigned(TRCSIFace(data).OnScanned)) then
+      TRCSIFace(data).OnScanned(TRCSIFace(data));
   except
 
   end;
@@ -585,6 +630,7 @@ var dllFuncStdNotifyBind: TDllStdNotifyBind;
     errorCode: dword;
     errorStr: string;
 begin
+  Self.mState := rsClosed;
   Self.unbound.Clear();
 
   if (dllHandle <> 0) then Self.UnloadLib();
@@ -782,6 +828,7 @@ begin
   if (Self.dllHandle = 0) then
     raise ERCSNoLibLoaded.Create('No library loaded, cannot unload!');
 
+  Self.mState := rsClosed;
   FreeLibrary(Self.dllHandle);
   Self.Reset();
 end;
@@ -1328,6 +1375,20 @@ class function TRCSIFace.apiVersionComparable(version: Cardinal): Cardinal;
 begin
   // revert two lower bytes
   Result := ((version and $FF) shl 8) or ((version shr 8) and $FF);
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+
+function TRCSIFace.IsLibLoaded(): Boolean;
+begin
+  Result := (Self.dllHandle <> 0);
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+
+function TRCSIFace.IsStateActionInProgress(): Boolean;
+begin
+  Result := ((Self.state = rsOpening) or (Self.state = rsClosing) or (Self.state = rsStarting) or (Self.state = rsStopping));
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
