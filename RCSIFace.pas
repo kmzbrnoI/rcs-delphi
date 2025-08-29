@@ -252,6 +252,11 @@ type
     eOnOutputChange : TModuleChangeEvent;
     eOnScanned : TNotifyEvent;
 
+     // These functions were used before as Opened() and Started()
+     // Nowadays, state is stored in library and these functions are not required
+     function RawOpened(): Boolean;
+     function RawStarted(): Boolean;
+
      procedure Reset();
      procedure PickApiVersion();
      function IsSimulation(): Boolean;
@@ -288,12 +293,12 @@ type
      // device open/close
      procedure Open();
      procedure Close();
-     function Opened(): Boolean; // TODO Cancel completely?
+     function Opened(): Boolean;
 
      // communication start/stop
      procedure Start();
      procedure Stop();
-     function Started(): Boolean; // TODO Cancel completely?
+     function Started(): Boolean;
 
      // I/O functions:
      procedure SetOutput(module, port: Cardinal; state: Integer); overload;
@@ -964,12 +969,17 @@ begin
     raise ERCSGeneralException.Create('General exception in RCS library!');
 end;
 
-function TRCSIFace.Opened(): Boolean;
+function TRCSIFace.RawOpened(): Boolean;
 begin
   if (not Assigned(dllFuncOpened)) then
     raise ERCSFuncNotAssigned.Create('Opened not assigned')
   else
     Result := dllFuncOpened();
+end;
+
+function TRCSIFace.Opened(): Boolean;
+begin
+  Result := (Self.state >= TRCSState.rsOpenStopped);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1009,12 +1019,17 @@ begin
     raise ERCSGeneralException.Create('General exception in RCS library!');
 end;
 
-function TRCSIFace.Started(): Boolean;
+function TRCSIFace.RawStarted(): Boolean;
 begin
   if (not Assigned(dllFuncStarted)) then
     raise ERCSFuncNotAssigned.Create('Started not assigned')
   else
     Result := dllFuncStarted();
+end;
+
+function TRCSIFace.Started(): Boolean;
+begin
+  Result := (Self.state >= TRCSState.rsStartedNotScanned);
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
