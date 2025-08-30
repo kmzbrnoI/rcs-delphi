@@ -304,9 +304,11 @@ type
      procedure SetOutput(module, port: Cardinal; state: Integer); overload;
      procedure SetOutput(module, port: Cardinal; state: TRCSOutputState); overload;
      function GetInput(module, port: Cardinal): TRCSInputState;
+     function GetInputNoEx(module, port: Cardinal): TRCSInputState;
      procedure SetInput(module, port: Cardinal; State : Integer);
      function GetOutput(module, port: Cardinal): Integer;
      function GetOutputState(module, port: Cardinal): TRCSOutputState; overload;
+     function GetOutputStateNoEx(module, port: Cardinal): TRCSOutputState;
 
      function GetInputType(module, port: Cardinal): TRCSIPortType;
      function GetOutputType(module, port: Cardinal): TRCSOPortType;
@@ -326,6 +328,7 @@ type
      function GetModuleOutputsCount(Module: Cardinal): Cardinal;
 
      function IsStateActionInProgress(): Boolean;
+     class function RCSInputStateValid(state: TRCSInputState): Boolean;
 
      // versions:
      function GetDllVersion(): string;
@@ -1052,6 +1055,23 @@ begin
   Result := TRCSInputState(tmp);
 end;
 
+function TRCSIFace.GetInputNoEx(module, port: Cardinal): TRCSInputState;
+begin
+  if (not Assigned(dllFuncGetInput)) then
+    Exit(TRCSInputState.failure);
+
+  var tmp := dllFuncGetInput(module, port);
+
+  if (tmp = RCS_NOT_STARTED) then
+    Exit(TRCSInputState.failure)
+  else if (tmp = RCS_GENERAL_EXCEPTION) then
+    Exit(TRCSInputState.failure)
+  else if (tmp = RCS_MODULE_DEPRECATED_FAILED) then
+    Exit(TRCSInputState.failure);
+
+  Result := TRCSInputState(tmp);
+end;
+
 procedure TRCSIFace.SetOutput(module, port: Cardinal; state: Integer);
 begin
   if (not Assigned(dllFuncSetOutput)) then
@@ -1113,6 +1133,21 @@ end;
 function TRCSIFace.GetOutputState(module, port: Cardinal): TRCSOutputState;
 begin
   Result := TRCSOutputState(Self.GetOutput(module, port));
+end;
+
+function TRCSIFace.GetOutputStateNoEx(module, port: Cardinal): TRCSOutputState;
+begin
+  if (not Assigned(dllFuncGetOutput)) then
+    Exit(TRCSOutputState.osFailure);
+
+  var tmp := dllFuncGetOutput(module, port);
+
+  if (tmp = RCS_NOT_STARTED) then
+    Exit(TRCSOutputState.osFailure)
+  else if (tmp = RCS_GENERAL_EXCEPTION) then
+    Exit(TRCSOutputState.osFailure);
+
+  Result := TRCSOutputState(tmp);
 end;
 
 function TRCSIFace.GetInputType(module, port: Cardinal): TRCSIPortType;
@@ -1404,6 +1439,13 @@ end;
 function TRCSIFace.IsStateActionInProgress(): Boolean;
 begin
   Result := ((Self.state = rsOpening) or (Self.state = rsClosing) or (Self.state = rsStarting) or (Self.state = rsStopping));
+end;
+
+////////////////////////////////////////////////////////////////////////////////
+
+class function TRCSIFace.RCSInputStateValid(state: TRCSInputState): Boolean;
+begin
+  Result := ((state = TRCSInputState.isOff) or (state = TRCSInputState.isOn));
 end;
 
 ////////////////////////////////////////////////////////////////////////////////
